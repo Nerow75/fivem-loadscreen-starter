@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import {
-  THEME, LINKS, ICONS,
+  THEME, LINKS,
   VIDEOS, MUSIC, TOP_PHRASES, SERVER
 } from './config';
+
+const IS_DEV = import.meta?.env?.DEV === true;
 
 // Listes explicites
 const videos = Array.isArray(VIDEOS.list) ? VIDEOS.list : [];
@@ -37,9 +39,10 @@ export default function App() {
 
   // Spectrum (AudioContext)
   const analyserRef = useRef(null);
-  const audioCtxRef = useRef(null);
   const dataArrayRef = useRef(null);
   const spectrumCanvasRef = useRef(null);
+  const logoRef = useRef(null);
+  const centerHostRef = useRef(null); // conteneur central
 
   // Particules canvas
   const particlesCanvasRef = useRef(null);
@@ -57,10 +60,7 @@ export default function App() {
       setProgress(Math.max(0, Math.min(100, val)));
       setLoadingText(d.message || 'Chargement en cours...');
 
-      // Heure / météo
-      // Supporte plusieurs formats possibles selon ton script serveur:
-      // d.time -> "12:34", d.weather -> "CLEAR"
-      // ou d.igTime / d.igWeather
+      // Heure / météo (d.time/d.weather ou d.igTime/d.igWeather)
       if (typeof d.time === 'string') setIgTime(d.time);
       if (typeof d.weather === 'string') setIgWeather(normalizeWeather(d.weather));
       if (typeof d.igTime === 'string') setIgTime(d.igTime);
@@ -121,41 +121,121 @@ export default function App() {
     };
   }, []);
 
-  // AudioContext + Analyser pour spectrum
+  // AudioContext + Analyser via captureStream() (anti StrictMode / hot reload)
   useEffect(() => {
-    if (!audioRef.current) return;
+    const audioEl = audioRef.current;
+    if (!audioEl) return;
 
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = ctx.createMediaElementSource(audioRef.current);
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount; // 128
-    const dataArray = new Uint8Array(bufferLength);
+    // singleton global (sur window) pour survivre au hot-reload
+    if (!window.__nrSpectrum) {
+      window.__nrSpectrum = { wired: false, ctx: null, analyser: null, stream: null };
+    }
+    const global = window.__nrSpectrum;
 
-    src.connect(analyser);
-    analyser.connect(ctx.destination);
+    // déjà câblé ? -> on réutilise
+    if (global.wired && global.analyser) {
+      analyserRef.current = global.analyser;
+      if (!dataArrayRef.current) {
+        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+      }
+      startSpectrumLoop();
+      return () => stopSpectrumLoop();
+    }
 
-    audioCtxRef.current = ctx;
-    analyserRef.current = analyser;
-    dataArrayRef.current = dataArray;
+    try {
+      // Contexte + source à partir d’un MediaStream du <audio>
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
 
-    let rafId;
-    const render = () => {
-      drawCircularSpectrum();
-      rafId = requestAnimationFrame(render);
+      // captureStream est la clé : évite "already connected previously"
+      const stream =
+        (audioEl.captureStream && audioEl.captureStream()) ||
+        (audioEl.mozCaptureStream && audioEl.mozCaptureStream());
+
+      if (!stream) {
+        console.warn('captureStream non dispo, fallback MediaElementSource (peut casser en StrictMode)');
+        // Dernier recours : MediaElementSource (on le fait qu’une fois)
+        if (audioEl.__wiredMES) {
+          analyserRef.current = audioEl.__analyserMES;
+        } else {
+          const source = ctx.createMediaElementSource(audioEl);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+          analyser.connect(ctx.destination);
+          audioEl.__wiredMES = true;
+          audioEl.__analyserMES = analyser;
+          analyserRef.current = analyser;
+        }
+      } else {
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+
+        analyserRef.current = analyser;
+        global.wired = true;
+        global.ctx = ctx;
+        global.analyser = analyser;
+        global.stream = stream;
+      }
+
+      dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+      startSpectrumLoop();
+
+      return () => {
+        stopSpectrumLoop();
+        // En dev : on garde le ctx vivant (hot reload). En prod : on cleanup.
+        if (!IS_DEV && global.ctx) {
+          try {
+            global.ctx.close();
+          } catch {}
+          global.wired = false;
+          global.ctx = null;
+          global.analyser = null;
+          global.stream = null;
+        }
+      };
+    } catch (err) {
+      console.error('AudioContext init error:', err);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Positionne le canvas exactement sur le logo
+  useLayoutEffect(() => {
+    const placeCanvas = () => {
+      const canvas = spectrumCanvasRef.current;
+      const logo = logoRef.current;
+      const host = centerHostRef.current;
+      if (!canvas || !logo || !host) return;
+
+      const hostRect = host.getBoundingClientRect();
+      const r = logo.getBoundingClientRect();
+
+      const cx = r.left + r.width / 2 - hostRect.left;
+      const cy = r.top + r.height / 2 - hostRect.top;
+
+      // Le canvas est carré : 420x420 ; on centre dessus
+      const size = 420;
+      canvas.style.position = 'absolute';
+      canvas.style.left = `${cx - size / 2}px`;
+      canvas.style.top = `${cy - size / 2}px`;
+      canvas.width = size;
+      canvas.height = size;
     };
-    rafId = requestAnimationFrame(render);
+
+    placeCanvas();
+    const ro = new ResizeObserver(placeCanvas);
+    ro.observe(document.body);
+    window.addEventListener('resize', placeCanvas);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      try {
-        src.disconnect();
-        analyser.disconnect();
-        ctx.close();
-      } catch {}
+      ro.disconnect();
+      window.removeEventListener('resize', placeCanvas);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playlist.length]);
+  }, []);
 
   // Particules
   useEffect(() => {
@@ -242,15 +322,36 @@ export default function App() {
     return map[m] || w;
   }
 
+  // --- Spectrum drawing ---
+  let rafSpectrum = null;
+  function startSpectrumLoop() {
+    if (rafSpectrum) return;
+    const loop = () => {
+      drawCircularSpectrum();
+      rafSpectrum = requestAnimationFrame(loop);
+    };
+    rafSpectrum = requestAnimationFrame(loop);
+  }
+  function stopSpectrumLoop() {
+    if (rafSpectrum) {
+      cancelAnimationFrame(rafSpectrum);
+      rafSpectrum = null;
+    }
+  }
+
   function drawCircularSpectrum() {
     const canvas = spectrumCanvasRef.current;
     const analyser = analyserRef.current;
+    if (!canvas || !analyser) return;
+
+    if (!dataArrayRef.current) {
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
+    }
     const dataArray = dataArrayRef.current;
-    if (!canvas || !analyser || !dataArray) return;
 
     const ctx = canvas.getContext('2d');
-    const w = canvas.width = 420;
-    const h = canvas.height = 420;
+    const w = canvas.width;
+    const h = canvas.height;
     const cx = w / 2, cy = h / 2;
 
     ctx.clearRect(0, 0, w, h);
@@ -421,27 +522,27 @@ export default function App() {
 
         {/* Centre : Logo + Spectrum + contrôles + volume + titre */}
         <div
+          ref={centerHostRef}
           style={{
             position: 'relative', zIndex: 3, width: '100%', height: '100%',
             display: 'grid', placeItems: 'center', padding: '0 24px'
           }}
         >
           <div style={{ textAlign: 'center', position: 'relative' }}>
-            {/* Spectrum circulaire */}
+            {/* Spectrum circulaire (positionné sur le logo via layout effect) */}
             <canvas
               ref={spectrumCanvasRef}
               width={420}
               height={420}
               style={{
                 position: 'absolute',
-                left: '50%', top: '50%',
-                transform: 'translate(-50%,-50%)',
                 pointerEvents: 'none'
               }}
             />
 
             {/* Logo central */}
             <img
+              ref={logoRef}
               src="logo.png"
               alt="Logo"
               style={{
@@ -455,6 +556,7 @@ export default function App() {
             {/* Volume slider */}
             <div style={{ marginTop: 18 }}>
               <input
+                className="nr-range"
                 type="range"
                 min={0} max={100}
                 value={volume}
@@ -621,7 +723,7 @@ function iconStyleBox() {
     background: 'rgba(0,0,0,0.35)',
     border: '1px solid rgba(255,255,255,0.12)',
     backdropFilter: 'blur(6px)',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.3), 0 0 14px rgba(255,140,0,0.25)', // léger glow orange
+    boxShadow: '0 8px 24px rgba(0,0,0,0.3), 0 0 14px rgba(255,140,0,0.25)',
     transition: 'transform .15s ease',
     textDecoration: 'none',
   };

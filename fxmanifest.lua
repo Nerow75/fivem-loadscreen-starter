@@ -12,7 +12,6 @@ files {
   'dist/assets/*.js',
   'dist/assets/*.css',
   'dist/logo.png',
-  'dist/media/videos/*.mp4',
   'dist/media/music/*.mp3'
 }
 

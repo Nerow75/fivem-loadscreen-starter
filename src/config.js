@@ -29,6 +29,8 @@ export const VIDEOS = {
     "media/videos/SALoading2.mp4",
     "media/videos/SALoading3.mp4",
     "media/videos/SALoading4.mp4",
+    "media/videos/SALoading5.mp4",
+    "media/videos/SALoading6.mp4",
   ],
 };
 
