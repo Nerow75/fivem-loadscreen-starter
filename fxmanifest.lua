@@ -12,6 +12,7 @@ files {
   'dist/assets/*.js',
   'dist/assets/*.css',
   'dist/logo.png',
+  'dist/webfonts/*.woff2',
   'dist/media/music/*.mp3'
 }
 

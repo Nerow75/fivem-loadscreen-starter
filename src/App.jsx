@@ -1,74 +1,79 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import {
-  THEME, LINKS,
-  VIDEOS, MUSIC, TOP_PHRASES, SERVER
+  THEME, LINKS, VIDEOS, MUSIC, TOP_PHRASES, SERVER, NEWS
 } from './config';
 
-const IS_DEV = import.meta?.env?.DEV === true;
-
-// Listes explicites
 const videos = Array.isArray(VIDEOS.list) ? VIDEOS.list : [];
 const playlist = Array.isArray(MUSIC.list) ? MUSIC.list : [];
 
 export default function App() {
-  // --------- STATE GLOBAL ----------
+  // --------- STATE ----------
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Initialisation...');
-
-  // Heure/météo In-Game (placeholders + écoute NUI)
-  const [igTime, setIgTime] = useState('--:--');
-  const [igWeather, setIgWeather] = useState('Inconnu');
-
-  // Texte haut-centre (rotateur)
+  const [playerCount, setPlayerCount] = useState(0);
+  const [maxPlayers] = useState(128);
+  
+  // ✨ Heure réelle + jour
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+  
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [phraseOpacity, setPhraseOpacity] = useState(1);
-
-  // Vidéo de fond
   const [currentVideo, setCurrentVideo] = useState('');
 
   // Audio
   const audioRef = useRef(null);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [volume, setVolume] = useState(
-    () => Number(localStorage.getItem('nr_vol') ?? 30)
-  );
+  const [volume, setVolume] = useState(() => Number(localStorage.getItem('nr_vol') ?? 30));
 
-  // Spectrum (AudioContext)
-  const analyserRef = useRef(null);
-  const dataArrayRef = useRef(null);
-  const spectrumCanvasRef = useRef(null);
   const logoRef = useRef(null);
-  const centerHostRef = useRef(null); // conteneur central
 
-  // Particules canvas
+  // Particules
   const particlesCanvasRef = useRef(null);
   const particlesRef = useRef([]);
+  
+  // ✨ Trail souris (canvas)
+  const trailCanvasRef = useRef(null);
+  const trailPointsRef = useRef([]);
 
   // --------- EFFECTS ----------
-  // NUI messages (progress + time/weather)
+  // NUI messages
   useEffect(() => {
     const onMsg = (e) => {
       const d = e.data || {};
-      // Progress
       const val = typeof d.loadFraction === 'number' ? d.loadFraction * 100
                 : typeof d.value === 'number' ? d.value
                 : progress;
       setProgress(Math.max(0, Math.min(100, val)));
       setLoadingText(d.message || 'Chargement en cours...');
-
-      // Heure / météo (d.time/d.weather ou d.igTime/d.igWeather)
-      if (typeof d.time === 'string') setIgTime(d.time);
-      if (typeof d.weather === 'string') setIgWeather(normalizeWeather(d.weather));
-      if (typeof d.igTime === 'string') setIgTime(d.igTime);
-      if (typeof d.igWeather === 'string') setIgWeather(normalizeWeather(d.igWeather));
+      if (typeof d.playerCount === 'number') setPlayerCount(d.playerCount);
     };
     window.addEventListener('message', onMsg);
     return () => window.removeEventListener('message', onMsg);
   }, [progress]);
+
+  // ✨ Horloge temps réel
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long' 
+      });
+      setCurrentTime(time);
+      setCurrentDate(date.charAt(0).toUpperCase() + date.slice(1)); // Capitalize
+    };
+    
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Rotateur de phrases
   useEffect(() => {
@@ -83,15 +88,14 @@ export default function App() {
     return () => clearInterval(itv);
   }, []);
 
-  // Choix vidéo
+  // Vidéo aléatoire
   useEffect(() => {
     if (videos.length) {
-      const pick = videos[Math.floor(Math.random() * videos.length)];
-      setCurrentVideo(pick);
+      setCurrentVideo(videos[Math.floor(Math.random() * videos.length)]);
     }
   }, []);
 
-  // Audio initialisation / changement de piste / volume
+  // Audio
   useEffect(() => {
     if (!audioRef.current || !playlist.length) return;
     audioRef.current.src = playlist[trackIndex].url;
@@ -101,14 +105,12 @@ export default function App() {
     else audioRef.current.pause();
   }, [trackIndex, isPlaying]);
 
-  // Volume persistant
   useEffect(() => {
     if (!audioRef.current) return;
     audioRef.current.volume = volume / 100;
     localStorage.setItem('nr_vol', String(volume));
   }, [volume]);
 
-  // Débloque autoplay au 1er clic / 1er message
   useEffect(() => {
     const tryPlay = () => audioRef.current?.play().catch(() => {});
     const pointer = () => { tryPlay(); window.removeEventListener('pointerdown', pointer); };
@@ -121,123 +123,7 @@ export default function App() {
     };
   }, []);
 
-  // AudioContext + Analyser via captureStream() (anti StrictMode / hot reload)
-  useEffect(() => {
-    const audioEl = audioRef.current;
-    if (!audioEl) return;
-
-    // singleton global (sur window) pour survivre au hot-reload
-    if (!window.__nrSpectrum) {
-      window.__nrSpectrum = { wired: false, ctx: null, analyser: null, stream: null };
-    }
-    const global = window.__nrSpectrum;
-
-    // déjà câblé ? -> on réutilise
-    if (global.wired && global.analyser) {
-      analyserRef.current = global.analyser;
-      if (!dataArrayRef.current) {
-        dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
-      }
-      startSpectrumLoop();
-      return () => stopSpectrumLoop();
-    }
-
-    try {
-      // Contexte + source à partir d’un MediaStream du <audio>
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new Ctx();
-
-      // captureStream est la clé : évite "already connected previously"
-      const stream =
-        (audioEl.captureStream && audioEl.captureStream()) ||
-        (audioEl.mozCaptureStream && audioEl.mozCaptureStream());
-
-      if (!stream) {
-        console.warn('captureStream non dispo, fallback MediaElementSource (peut casser en StrictMode)');
-        // Dernier recours : MediaElementSource (on le fait qu’une fois)
-        if (audioEl.__wiredMES) {
-          analyserRef.current = audioEl.__analyserMES;
-        } else {
-          const source = ctx.createMediaElementSource(audioEl);
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 256;
-          source.connect(analyser);
-          analyser.connect(ctx.destination);
-          audioEl.__wiredMES = true;
-          audioEl.__analyserMES = analyser;
-          analyserRef.current = analyser;
-        }
-      } else {
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
-
-        analyserRef.current = analyser;
-        global.wired = true;
-        global.ctx = ctx;
-        global.analyser = analyser;
-        global.stream = stream;
-      }
-
-      dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
-      startSpectrumLoop();
-
-      return () => {
-        stopSpectrumLoop();
-        // En dev : on garde le ctx vivant (hot reload). En prod : on cleanup.
-        if (!IS_DEV && global.ctx) {
-          try {
-            global.ctx.close();
-          } catch {}
-          global.wired = false;
-          global.ctx = null;
-          global.analyser = null;
-          global.stream = null;
-        }
-      };
-    } catch (err) {
-      console.error('AudioContext init error:', err);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Positionne le canvas exactement sur le logo
-  useLayoutEffect(() => {
-    const placeCanvas = () => {
-      const canvas = spectrumCanvasRef.current;
-      const logo = logoRef.current;
-      const host = centerHostRef.current;
-      if (!canvas || !logo || !host) return;
-
-      const hostRect = host.getBoundingClientRect();
-      const r = logo.getBoundingClientRect();
-
-      const cx = r.left + r.width / 2 - hostRect.left;
-      const cy = r.top + r.height / 2 - hostRect.top;
-
-      // Le canvas est carré : 420x420 ; on centre dessus
-      const size = 420;
-      canvas.style.position = 'absolute';
-      canvas.style.left = `${cx - size / 2}px`;
-      canvas.style.top = `${cy - size / 2}px`;
-      canvas.width = size;
-      canvas.height = size;
-    };
-
-    placeCanvas();
-    const ro = new ResizeObserver(placeCanvas);
-    ro.observe(document.body);
-    window.addEventListener('resize', placeCanvas);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', placeCanvas);
-    };
-  }, []);
-
-  // Particules
+  // ✨ Particules avec constellation
   useEffect(() => {
     const canvas = particlesCanvasRef.current;
     if (!canvas) return;
@@ -252,7 +138,6 @@ export default function App() {
     };
     window.addEventListener('resize', onResize);
 
-    // init particles
     const count = 60;
     particlesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * w,
@@ -260,12 +145,14 @@ export default function App() {
       r: Math.random() * 1.8 + 0.6,
       a: Math.random() * 2 * Math.PI,
       v: Math.random() * 0.3 + 0.2,
-      o: Math.random() * 0.5 + 0.2, // opacity
+      o: Math.random() * 0.5 + 0.2,
     }));
 
     let rafId;
     const step = () => {
       ctx.clearRect(0, 0, w, h);
+      
+      // Déplace les particules
       particlesRef.current.forEach(p => {
         p.x += Math.cos(p.a) * p.v;
         p.y += Math.sin(p.a) * p.v * 0.6;
@@ -275,15 +162,38 @@ export default function App() {
         if (p.x > w + 5) p.x = -5;
         if (p.y < -5) p.y = h + 5;
         if (p.y > h + 5) p.y = -5;
-
+      });
+      
+      // ✨ CONSTELLATION : Lignes entre particules proches
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p1 = particlesRef.current[i];
+          const p2 = particlesRef.current[j];
+          const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+          
+          if (dist < 150) {
+            const opacity = (1 - dist / 150) * 0.3;
+            ctx.strokeStyle = `rgba(34,167,232,${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+      
+      // Dessine les particules
+      particlesRef.current.forEach(p => {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,140,0,${p.o})`;
-        ctx.shadowColor = 'rgba(255,140,0,0.5)';
+        ctx.fillStyle = `rgba(34,167,232,${p.o})`;
+        ctx.shadowColor = 'rgba(34,167,232,0.5)';
         ctx.shadowBlur = 6;
         ctx.fill();
         ctx.shadowBlur = 0;
       });
+      
       rafId = requestAnimationFrame(step);
     };
     rafId = requestAnimationFrame(step);
@@ -294,102 +204,85 @@ export default function App() {
     };
   }, []);
 
-  // --------- HELPERS UI ----------
-  const iconBtnStyle = {
-    width: 44, height: 44, display: 'grid', placeItems: 'center',
-    borderRadius: 12, background: 'rgba(0,0,0,0.35)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    cursor: 'pointer', transition: 'transform .15s ease',
-    backdropFilter: 'blur(6px)',
-  };
-
-  function normalizeWeather(w) {
-    const m = String(w || '').toUpperCase();
-    const map = {
-      CLEAR: 'Claire',
-      EXTRASUNNY: 'Soleil',
-      CLOUDS: 'Nuageux',
-      OVERCAST: 'Couvert',
-      RAIN: 'Pluie',
-      THUNDER: 'Orage',
-      SMOG: 'Brouillard',
-      FOGGY: 'Brume',
-      NEUTRAL: 'Variable',
-      SNOW: 'Neige',
-      BLIZZARD: 'Tempête de neige',
-      XMAS: 'Neige (Noël)',
-    };
-    return map[m] || w;
-  }
-
-  // --- Spectrum drawing ---
-  let rafSpectrum = null;
-  function startSpectrumLoop() {
-    if (rafSpectrum) return;
-    const loop = () => {
-      drawCircularSpectrum();
-      rafSpectrum = requestAnimationFrame(loop);
-    };
-    rafSpectrum = requestAnimationFrame(loop);
-  }
-  function stopSpectrumLoop() {
-    if (rafSpectrum) {
-      cancelAnimationFrame(rafSpectrum);
-      rafSpectrum = null;
-    }
-  }
-
-  function drawCircularSpectrum() {
-    const canvas = spectrumCanvasRef.current;
-    const analyser = analyserRef.current;
-    if (!canvas || !analyser) return;
-
-    if (!dataArrayRef.current) {
-      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-    }
-    const dataArray = dataArrayRef.current;
-
+  // ✨ NOUVEAU : Trail souris fluide (canvas)
+  useEffect(() => {
+    const canvas = trailCanvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2, cy = h / 2;
 
-    ctx.clearRect(0, 0, w, h);
+    let w = (canvas.width = window.innerWidth);
+    let h = (canvas.height = window.innerHeight);
 
-    // Glow autour du logo
-    ctx.beginPath();
-    ctx.arc(cx, cy, 110, 0, Math.PI * 2);
-    ctx.shadowColor = 'rgba(255,140,0,0.65)';
-    ctx.shadowBlur = 28;
-    ctx.strokeStyle = 'rgba(255,140,0,0.35)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    const onResize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', onResize);
 
-    analyser.getByteFrequencyData(dataArray);
-    const bars = 64;
-    const radius = 120;
-    for (let i = 0; i < bars; i++) {
-      const angle = (i / bars) * Math.PI * 2;
-      const v = dataArray[i];
-      const len = 24 + (v / 255) * 36; // hauteur barres
-      const x1 = cx + Math.cos(angle) * radius;
-      const y1 = cy + Math.sin(angle) * radius;
-      const x2 = cx + Math.cos(angle) * (radius + len);
-      const y2 = cy + Math.sin(angle) * (radius + len);
+    // Ajouter points au mouvement
+    const onMove = (e) => {
+      trailPointsRef.current.push({
+        x: e.clientX,
+        y: e.clientY,
+        life: 1,
+      });
+      
+      // Limiter à 30 points
+      if (trailPointsRef.current.length > 30) {
+        trailPointsRef.current.shift();
+      }
+    };
+    window.addEventListener('mousemove', onMove);
 
-      const grad = ctx.createLinearGradient(x1, y1, x2, y2);
-      grad.addColorStop(0, 'rgba(255,140,0,0.2)');
-      grad.addColorStop(1, 'rgba(255,208,138,0.9)');
+    let rafId;
+    const animate = () => {
+      ctx.clearRect(0, 0, w, h);
+      
+      // Dégrader la vie des points
+      trailPointsRef.current = trailPointsRef.current.map(p => ({
+        ...p,
+        life: p.life - 0.03,
+      })).filter(p => p.life > 0);
+      
+      // Dessiner le trail
+      if (trailPointsRef.current.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(trailPointsRef.current[0].x, trailPointsRef.current[0].y);
+        
+        for (let i = 1; i < trailPointsRef.current.length; i++) {
+          const p = trailPointsRef.current[i];
+          ctx.lineTo(p.x, p.y);
+        }
+        
+        ctx.strokeStyle = `rgba(34, 167, 232, 0.6)`;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = 'rgba(34, 167, 232, 0.8)';
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        
+        // Points lumineux
+        trailPointsRef.current.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2 * p.life, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(154, 220, 248, ${p.life * 0.8})`;
+          ctx.shadowColor = `rgba(34, 167, 232, ${p.life})`;
+          ctx.shadowBlur = 10;
+          ctx.fill();
+        });
+      }
+      
+      rafId = requestAnimationFrame(animate);
+    };
+    rafId = requestAnimationFrame(animate);
 
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-  }
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('mousemove', onMove);
+    };
+  }, []);
 
   const handleEnded = () => setTrackIndex((i) => (i + 1) % playlist.length);
 
@@ -400,15 +293,16 @@ export default function App() {
       {currentVideo && (
         <video
           src={currentVideo}
-          autoPlay muted loop playsInline
+          autoPlay muted loop playsInline preload="metadata"
           style={{
             position: 'fixed', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', zIndex: -1
+            objectFit: 'cover', zIndex: -1, background: '#000'
           }}
+          onError={(e) => console.warn('Video introuvable :', currentVideo, e)}
         />
       )}
 
-      {/* Overlay sombre */}
+      {/* Overlay */}
       <div
         style={{
           position: 'fixed', inset: 0,
@@ -417,7 +311,7 @@ export default function App() {
         }}
       />
 
-      {/* Particules */}
+      {/* Particules avec constellation */}
       <canvas
         ref={particlesCanvasRef}
         style={{
@@ -425,31 +319,55 @@ export default function App() {
         }}
       />
 
-      {/* Entrée fade-in container */}
+      {/* ✨ Trail souris (canvas) */}
+      <canvas
+        ref={trailCanvasRef}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none'
+        }}
+      />
+
+      {/* Container principal */}
       <div
         style={{
           animation: 'nrFadeIn 600ms ease both',
           position: 'relative',
-          zIndex: 2,
+          zIndex: 3,
           width: '100%',
-          height: '100%'
+          height: '100%',
         }}
       >
-        {/* Haut gauche : Heure + Météo */}
+        {/* ✨ Haut gauche : Heure réelle + Joueurs */}
         <div
           style={{
             position: 'fixed', top: 18, left: 18, zIndex: 5,
-            color: '#fff', fontSize: 14, lineHeight: 1.15,
+            color: '#fff', fontSize: 14, lineHeight: 1.4,
             textShadow: '0 2px 6px rgba(0,0,0,0.45)',
-            background: 'rgba(0,0,0,0.25)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            padding: '8px 12px',
-            borderRadius: 10,
-            backdropFilter: 'blur(6px)',
+            background: 'rgba(0,0,0,0.15)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            padding: '12px 16px',
+            borderRadius: 16,
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           }}
         >
-          <div><strong>Heure In-Game :</strong> {igTime}</div>
-          <div><strong>Météo :</strong> {igWeather}</div>
+          <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <i className="fa-solid fa-clock" style={{ color: THEME.primary, fontSize: 12 }} />
+            <strong>{currentTime}</strong>
+          </div>
+          <div style={{ marginBottom: 8, fontSize: 12, opacity: 0.9 }}>
+            {currentDate}
+          </div>
+          <div style={{ 
+            paddingTop: 8, 
+            borderTop: '1px solid rgba(255,255,255,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}>
+            <i className="fa-solid fa-users" style={{ color: THEME.primary, fontSize: 12 }} />
+            <strong>Joueurs :</strong> {playerCount}/{maxPlayers}
+          </div>
         </div>
 
         {/* Haut centre : Phrases */}
@@ -460,18 +378,21 @@ export default function App() {
               zIndex: 5, color: '#fff', fontSize: 14, letterSpacing: 0.3,
               textShadow: '0 2px 8px rgba(0,0,0,0.4)', textAlign: 'center',
               opacity: phraseOpacity, transition: 'opacity .24s ease',
-              padding: '6px 12px', background: 'rgba(0,0,0,0.25)',
-              borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(6px)',
+              padding: '10px 18px', 
+              background: 'rgba(0,0,0,0.15)',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              maxWidth: '80vw',
             }}
           >
             {TOP_PHRASES[phraseIndex]}
           </div>
         )}
 
-        {/* Haut droit : Discord / Boutique / Panel (Font Awesome) */}
+        {/* Haut droit : Links */}
         <div style={{ position: 'fixed', top: 18, right: 18, zIndex: 5, display: 'flex', gap: 10 }}>
-          {/* Discord */}
           <a
             href={LINKS.discord}
             target="_blank"
@@ -479,7 +400,7 @@ export default function App() {
             title="Rejoindre le Discord"
             style={{
               textDecoration: 'none',
-              ...iconStyleBox(), color: THEME.sunAndreas, fontSize: 20,
+              ...iconStyleBox(), color: THEME.primary, fontSize: 20,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
@@ -487,7 +408,6 @@ export default function App() {
             <i className="fa-brands fa-discord" />
           </a>
 
-          {/* Boutique */}
           <a
             href={LINKS.shop}
             target="_blank"
@@ -495,7 +415,7 @@ export default function App() {
             title="Boutique"
             style={{
               textDecoration: 'none',
-              ...iconStyleBox(), color: THEME.sunAndreas, fontSize: 20,
+              ...iconStyleBox(), color: THEME.primary, fontSize: 20,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
@@ -503,7 +423,6 @@ export default function App() {
             <i className="fa-solid fa-shop" />
           </a>
 
-          {/* Panel */}
           <a
             href={LINKS.panel}
             target="_blank"
@@ -511,7 +430,7 @@ export default function App() {
             title="Panel"
             style={{
               textDecoration: 'none',
-              ...iconStyleBox(), color: THEME.sunAndreas, fontSize: 20,
+              ...iconStyleBox(), color: THEME.primary, fontSize: 20,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
@@ -520,41 +439,30 @@ export default function App() {
           </a>
         </div>
 
-        {/* Centre : Logo + Spectrum + contrôles + volume + titre */}
+        {/* Centre : Logo simple */}
         <div
-          ref={centerHostRef}
           style={{
-            position: 'relative', zIndex: 3, width: '100%', height: '100%',
+            position: 'relative', zIndex: 4, width: '100%', height: '100%',
             display: 'grid', placeItems: 'center', padding: '0 24px'
           }}
         >
           <div style={{ textAlign: 'center', position: 'relative' }}>
-            {/* Spectrum circulaire (positionné sur le logo via layout effect) */}
-            <canvas
-              ref={spectrumCanvasRef}
-              width={420}
-              height={420}
-              style={{
-                position: 'absolute',
-                pointerEvents: 'none'
-              }}
-            />
-
-            {/* Logo central */}
+            {/* Logo 400x400 - simple, pas de pulse */}
             <img
               ref={logoRef}
               src="logo.png"
               alt="Logo"
               style={{
-                width: 200, height: 200, objectFit: 'contain',
+                width: 400,
+                height: 400,
+                objectFit: 'contain',
                 filter: 'drop-shadow(0 8px 40px rgba(0,0,0,0.6))',
                 display: 'block', margin: '0 auto',
-                position: 'relative', zIndex: 2,
               }}
             />
 
-            {/* Volume slider */}
-            <div style={{ marginTop: 18 }}>
+            {/* Volume */}
+            <div style={{ marginTop: 24 }}>
               <input
                 className="nr-range"
                 type="range"
@@ -566,17 +474,16 @@ export default function App() {
               />
             </div>
 
-            {/* Contrôles audio */}
+            {/* Contrôles */}
             <div
               style={{
-                marginTop: 14,
+                marginTop: 16,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 14
               }}
             >
-              {/* Précédent */}
               <div
                 style={iconBtnStyle}
                 onClick={() => setTrackIndex((i) => (i - 1 + playlist.length) % playlist.length)}
@@ -584,12 +491,11 @@ export default function App() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
                 title="Précédent"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.sunAndreas}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.primary}>
                   <path d="M6 6h2v12H6zM20 6v12L10 12l10-6z" />
                 </svg>
               </div>
 
-              {/* Play/Pause */}
               <div
                 style={{ ...iconBtnStyle, width: 52, height: 52 }}
                 onClick={() => setIsPlaying((p) => !p)}
@@ -598,17 +504,16 @@ export default function App() {
                 title={isPlaying ? 'Pause' : 'Lecture'}
               >
                 {isPlaying ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.sunAndreas}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.primary}>
                     <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
                   </svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.sunAndreas}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.primary}>
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
               </div>
 
-              {/* Suivant */}
               <div
                 style={iconBtnStyle}
                 onClick={() => setTrackIndex((i) => (i + 1) % playlist.length)}
@@ -616,17 +521,16 @@ export default function App() {
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')}
                 title="Suivant"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.sunAndreas}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={THEME.primary}>
                   <path d="M4 6v12l10-6L4 6zM18 6h2v12h-2z" />
                 </svg>
               </div>
             </div>
 
-            {/* Titre piste */}
             <div
               style={{
-                marginTop: 10, color: '#fff', opacity: 0.9,
-                textShadow: '0 2px 10px rgba(0,0,0,0.4)', fontSize: 14, letterSpacing: 0.3
+                marginTop: 12, color: '#fff', opacity: 0.9,
+                textShadow: '0 2px 10px rgba(0,0,0,0.4)', fontSize: 15, letterSpacing: 0.3
               }}
             >
               {playlist[trackIndex]?.title || ''}
@@ -634,76 +538,178 @@ export default function App() {
           </div>
         </div>
 
-        {/* Barre de chargement en bas */}
+        {/* ✨ Actualités bas droite */}
+        {NEWS && NEWS.length > 0 && (
+          <div
+            style={{
+              position: 'fixed', bottom: 80, right: 18, zIndex: 5,
+              width: 320,
+              background: 'rgba(0,0,0,0.15)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: 16,
+              padding: '14px 16px',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            }}
+          >
+            <div style={{ 
+              color: THEME.accent, 
+              fontSize: 13, 
+              fontWeight: 600, 
+              marginBottom: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <i className="fa-solid fa-newspaper" style={{ fontSize: 12 }} />
+              DERNIÈRES ACTUALITÉS
+            </div>
+            
+            {NEWS.slice(0, 3).map((news, i) => (
+              <div key={i} style={{ 
+                marginBottom: i < 2 ? 10 : 0,
+                paddingBottom: i < 2 ? 10 : 0,
+                borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'flex-start', 
+                  gap: 8,
+                  marginBottom: 4,
+                }}>
+                  <span style={{ fontSize: 16 }}>{news.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      color: '#fff', 
+                      fontSize: 12, 
+                      fontWeight: 600,
+                      marginBottom: 2,
+                    }}>
+                      {news.title}
+                    </div>
+                    <div style={{ 
+                      color: 'rgba(255,255,255,0.7)', 
+                      fontSize: 11,
+                      lineHeight: 1.4,
+                    }}>
+                      {news.description}
+                    </div>
+                    <div style={{ 
+                      color: THEME.primaryLight, 
+                      fontSize: 10,
+                      marginTop: 2,
+                    }}>
+                      {news.date}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Barre de progression */}
         <div
           style={{
             position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-            bottom: 40, zIndex: 4, width: '70vw', maxWidth: 900
+            bottom: 40, zIndex: 5, width: '70vw', maxWidth: 900
           }}
         >
           <div
             style={{
-              height: 6, width: '100%', borderRadius: 999, overflow: 'hidden',
-              background: 'rgba(255,255,255,0.15)', boxShadow: '0 6px 30px rgba(0,0,0,0.35)'
+              height: 8,
+              width: '100%', 
+              borderRadius: 999, 
+              overflow: 'hidden',
+              background: 'rgba(255,255,255,0.1)', 
+              boxShadow: '0 6px 30px rgba(0,0,0,0.35), inset 0 2px 4px rgba(0,0,0,0.3)',
+              border: '1px solid rgba(255,255,255,0.1)',
             }}
           >
             <div
               style={{
-                height: '100%', width: `${progress}%`, borderRadius: 999,
+                height: '100%', 
+                width: `${progress}%`, 
+                borderRadius: 999,
                 transition: 'width .3s ease',
-                background: `linear-gradient(90deg, ${THEME.sunAndreas}, #FFD08A)`,
-                boxShadow: '0 4px 18px rgba(255,140,0,0.55)'
+                background: `linear-gradient(90deg, ${THEME.primary}, ${THEME.primaryLight})`,
+                boxShadow: `0 0 20px ${THEME.primary}, 0 0 40px ${THEME.primary}80`,
+                position: 'relative',
               }}
-            />
+            >
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                animation: 'progressShine 2s ease-in-out infinite',
+              }} />
+            </div>
           </div>
           <div
             style={{
-              marginTop: 10, textAlign: 'center', color: 'rgba(255,255,255,0.85)',
-              textShadow: '0 2px 10px rgba(0,0,0,0.4)', fontSize: 13
+              marginTop: 10, textAlign: 'center', 
+              color: 'rgba(255,255,255,0.9)',
+              textShadow: '0 2px 10px rgba(0,0,0,0.4)', 
+              fontSize: 13,
+              fontWeight: 500,
             }}
           >
             {loadingText} · {Math.floor(progress)}%
           </div>
         </div>
 
-        {/* Bas gauche : version serveur */}
+        {/* Version */}
         <div
           style={{
-            position: 'fixed', bottom: 16, left: 18, zIndex: 4,
+            position: 'fixed', bottom: 16, left: 18, zIndex: 5,
             color: '#fff', fontSize: 12, opacity: 0.85,
             textShadow: '0 2px 6px rgba(0,0,0,0.45)',
-            background: 'rgba(0,0,0,0.25)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            padding: '6px 10px',
-            borderRadius: 9,
-            backdropFilter: 'blur(6px)',
+            background: 'rgba(0,0,0,0.15)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            padding: '8px 12px',
+            borderRadius: 12,
+            backdropFilter: 'blur(12px)',
           }}
         >
           {SERVER.version}
         </div>
       </div>
 
-      {/* Élément audio */}
       <audio ref={audioRef} onEnded={handleEnded} />
 
-      {/* Styles clés (fade-in + range + glow) */}
+      {/* Styles */}
       <style>{`
         @keyframes nrFadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        /* Slider stylé */
+        
+        @keyframes progressShine {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        
         .nr-range::-webkit-slider-runnable-track {
-          height: 6px; background: rgba(255,255,255,0.15);
+          height: 6px; 
+          background: rgba(255,255,255,0.15);
           border-radius: 999px;
         }
         .nr-range::-webkit-slider-thumb {
-          -webkit-appearance: none; appearance: none;
-          width: 16px; height: 16px; border-radius: 50%;
-          margin-top: -5px;
-          background: ${THEME.sunAndreas};
-          box-shadow: 0 0 12px rgba(255,140,0,0.8);
-          border: 1px solid rgba(255,255,255,0.6);
+          -webkit-appearance: none; 
+          appearance: none;
+          width: 18px; 
+          height: 18px; 
+          border-radius: 50%;
+          margin-top: -6px;
+          background: ${THEME.primary};
+          box-shadow: 0 0 12px rgba(34,167,232,0.8), 0 2px 8px rgba(0,0,0,0.3);
+          border: 2px solid rgba(255,255,255,0.8);
+          cursor: pointer;
+          transition: transform 0.15s ease;
+        }
+        .nr-range::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 0 20px rgba(34,167,232,1), 0 4px 12px rgba(0,0,0,0.4);
         }
         .nr-range { width: 220px; }
       `}</style>
@@ -711,7 +717,14 @@ export default function App() {
   );
 }
 
-// ------- styles helpers -------
+const iconBtnStyle = {
+  width: 44, height: 44, display: 'grid', placeItems: 'center',
+  borderRadius: 12, background: 'rgba(0,0,0,0.35)',
+  border: '1px solid rgba(255,255,255,0.12)',
+  cursor: 'pointer', transition: 'transform .15s ease',
+  backdropFilter: 'blur(6px)',
+};
+
 function iconStyleBox() {
   return {
     display: 'inline-flex',
@@ -719,13 +732,14 @@ function iconStyleBox() {
     justifyContent: 'center',
     width: 44,
     height: 44,
-    borderRadius: 12,
-    background: 'rgba(0,0,0,0.35)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    backdropFilter: 'blur(6px)',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.3), 0 0 14px rgba(255,140,0,0.25)',
+    borderRadius: 14,
+    background: 'rgba(0,0,0,0.15)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.3), 0 0 14px rgba(34,167,232,0.25)',
     transition: 'transform .15s ease',
     textDecoration: 'none',
+    cursor: 'pointer',
   };
 }
 
@@ -735,5 +749,6 @@ function rangeStyle() {
     width: 220,
     background: 'transparent',
     outline: 'none',
+    cursor: 'pointer',
   };
 }
