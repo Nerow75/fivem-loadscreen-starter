@@ -7,15 +7,11 @@ export default defineConfig({
   base: "./",
   build: {
     outDir: "dist",
-    // Copier les assets publics
     copyPublicDir: true,
-    // S'assurer que les assets sont bien inclus
-    assetsInlineLimit: 0, // Ne pas inline les assets
+    assetsInlineLimit: 0,
     rollupOptions: {
       output: {
-        // Structure propre pour les assets
         assetFileNames: (assetInfo) => {
-          // Garder les webfonts dans un dossier webfonts/
           if (
             assetInfo.name.endsWith(".woff2") ||
             assetInfo.name.endsWith(".woff") ||
@@ -28,6 +24,5 @@ export default defineConfig({
       },
     },
   },
-  // S'assurer que le dossier public est bien configuré
   publicDir: "public",
 });

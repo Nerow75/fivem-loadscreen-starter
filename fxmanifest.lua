@@ -6,14 +6,13 @@ description 'Écran de chargement'
 version '1.0.0'
 
 loadscreen 'dist/index.html'
+loadscreen_cursor 'yes'
+loadscreen_manual_shutdown 'yes'
 
 files {
-  'dist/index.html',
-  'dist/assets/*.js',
-  'dist/assets/*.css',
-  'dist/logo.png',
-  'dist/webfonts/*.woff2',
-  'dist/media/music/*.mp3'
+  'dist/**',
+  'logo.png',
+  'media/**'
 }
 
 client_scripts {
