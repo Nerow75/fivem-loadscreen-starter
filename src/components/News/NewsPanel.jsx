@@ -91,7 +91,7 @@ export const NewsPanel = ({ news }) => {
 
   return (
     <section
-      aria-label="DerniÃ¨res actualitÃ©s"
+      aria-label="Dernières actualités"
       style={{
         position: "fixed",
         zIndex: 5,
@@ -119,12 +119,12 @@ export const NewsPanel = ({ news }) => {
           aria-hidden="true"
           style={{ fontSize: "clamp(11px,3vw,12px)" }}
         />
-        <span>DERNIÃˆRES ACTUALITÃ‰S</span>
+        <span>DERNIÈRES ACTUALITÉS</span>
       </header>
 
       <ul
         role="list"
-        aria-label="Liste des actualitÃ©s"
+        aria-label="Liste des actualités"
         style={{ margin: 0, padding: 0 }}
       >
         {sliced.map((item, i) => (
@@ -137,9 +137,9 @@ export const NewsPanel = ({ news }) => {
       </ul>
 
       <style>{`
-        /* Mobile : recentre le panneau et libÃ¨re le bord droit */
+        /* Mobile : recentre le panneau et libère le bord droit */
         @media (max-width: 720px) {
-          [aria-label="DerniÃ¨res actualitÃ©s"]{
+          [aria-label="Dernières actualités"]{
             right: 50% !important;
             transform: translateX(50%);
             width: min(96vw, 540px) !important;
