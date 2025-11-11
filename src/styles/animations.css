@@ -1,3 +1,5 @@
+/* animations.css */
+/* Rôle : animations de base, réduites si l'utilisateur préfère moins d'animations. */
 @keyframes nrFadeIn {
   from {
     opacity: 0;
@@ -15,5 +17,14 @@
   }
   100% {
     transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
   }
 }

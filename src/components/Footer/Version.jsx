@@ -1,23 +1,46 @@
-import { glassBoxStyle } from '../../utils/constants';
+// Version.jsx
+import PropTypes from "prop-types";
 
 export const Version = ({ version }) => {
+  if (!version) return null;
+
+  const liquidGlassStyle = {
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
+    border: "1px solid rgba(255,255,255,0.18)",
+    boxShadow: `
+      0 8px 32px rgba(0,0,0,0.4),
+      inset 0 1px 1px rgba(255,255,255,0.25),
+      inset 0 -1px 1px rgba(0,0,0,0.1),
+      0 0 0 1px rgba(34,167,232,0.15)
+    `,
+    backdropFilter: "blur(12px) saturate(180%)",
+    WebkitBackdropFilter: "blur(12px) saturate(180%)",
+  };
+
   return (
     <div
+      role="note"
+      aria-label={`Version ${version}`}
       style={{
-        position: 'fixed',
-        bottom: 16,
-        left: 18,
+        position: "fixed",
+        bottom: "clamp(8px, 2vh, 16px)",
+        left: "clamp(10px, 2vw, 18px)",
         zIndex: 5,
-        color: '#fff',
-        fontSize: 12,
-        opacity: 0.85,
-        textShadow: '0 2px 6px rgba(0,0,0,0.45)',
-        padding: '8px 12px',
-        borderRadius: 12,
-        ...glassBoxStyle,
+        color: "#fff",
+        fontSize: "clamp(11px, 1.4vw, 12px)",
+        opacity: 0.9,
+        textShadow: "0 2px 6px rgba(0,0,0,0.45)",
+        padding: "6px 10px",
+        borderRadius: 10,
+        ...liquidGlassStyle,
       }}
     >
       {version}
     </div>
   );
+};
+
+Version.propTypes = {
+  version: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };

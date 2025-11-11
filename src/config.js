@@ -1,10 +1,10 @@
-// Palette Sun Andreas (nouvelle D.A.)
+// config.js
+// Palette Couleurs
 export const THEME = {
-  primary: "#22A7E8", // bleu
-  secondary: "#5E2CA5", // violet
-  accent: "#FFD400", // étoile
+  primary: "#22A7E8",
+  secondary: "#5E2CA5",
+  accent: "#FFD400",
   white: "#FFFFFF",
-  // Dérivés utiles
   primaryLight: "#9ADCF8",
 };
 
@@ -14,64 +14,57 @@ export const LINKS = {
   panel: "https://tonsite.com/panel",
 };
 
-export const ICONS = {
-  discordUrl: "",
-  shopUrl: "",
-  panelUrl: "",
-};
-
-// ⚠️ À REMPLACER avec les URLs Nextcloud/R2 quand prêt
+// Vidéos de fond : préférer des fichiers locaux (webm/mp4) plutôt que YouTube.
 export const VIDEOS = {
-  list: [
-    "media/videos/SALoading1.mp4",
-    "media/videos/SALoading2.mp4",
-    "media/videos/SALoading3.mp4",
-  ],
+  list: ["https://www.youtube.com/watch?v=QkkoHAzjnUs"],
 };
 
+// Playlist audio : titres courts et URL locales.
 export const MUSIC = {
   list: [
+    { title: "Night — J2S", url: "media/music/Night.mp3" },
     {
-      title: "Bienvenue sur Sun Andreas - J2S",
+      title: "Bienvenue sur Sun Andreas — J2S",
       url: "media/music/Bienvenue_Sur_SunAndreas.mp3",
     },
   ],
 };
 
+// Phrases de tête : messages courts et utiles
 export const TOP_PHRASES = [
-  "Pense à utiliser ton Nom et Prénom RP sur le Discord.",
-  "Consulte le Panel pour suivre ton personnage et les événements en cours.",
-  "Bon jeu à toutes et à tous sur le serveur !",
-  "N'oublie pas de lire les règles du serveur avant de jouer.",
-  "Le respect entre joueurs est la priorité n°1 sur Sun Andreas.",
-  "Rejoins notre Discord pour ne rien manquer des événements.",
-  "Les actions ont des conséquences... Choisis-les avec sagesse.",
+  "Utilise ton Nom et Prénom RP sur le Discord.",
+  "Consulte le Panel pour suivre ton personnage et les événements.",
+  "Bon jeu à toutes et à tous sur le serveur.",
+  "Lis les règles du serveur avant de jouer.",
+  "Le respect entre joueurs est la priorité n°1.",
+  "Rejoins notre Discord pour ne rien manquer.",
+  "Les actions ont des conséquences. Choisis-les avec sagesse.",
 ];
 
-// ✨ Actualités du serveur (bas droite)
+// Actualités (3–4 items max, format JJ/MM/AAAA)
 export const NEWS = [
   {
-    icon: "🎃", // Emoji ou classe Font Awesome "fa-solid fa-ghost"
+    icon: "🎃",
     title: "Event Halloween",
-    description: "Participez à la chasse aux bonbons jusqu'au 15/11 !",
+    description: "Participez à la chasse aux bonbons jusqu’au 15/11.",
     date: "05/11/2025",
   },
   {
     icon: "🚗",
     title: "Nouveaux véhicules",
-    description: "5 nouveaux véhicules ajoutés dans le concessionnaire.",
+    description: "5 nouveaux véhicules ajoutés au concessionnaire.",
     date: "01/11/2025",
   },
   {
     icon: "⚖️",
-    title: "MAJ des règles",
-    description: "Consultez les nouvelles règles de RP sur le Discord.",
+    title: "Mise à jour des règles",
+    description: "Consultez les nouvelles règles RP sur le Discord.",
     date: "28/10/2025",
   },
   {
     icon: "🎁",
     title: "Boutique",
-    description: "Nouveaux packs disponibles sur Tebex !",
+    description: "Nouveaux packs disponibles sur Tebex.",
     date: "25/10/2025",
   },
 ];

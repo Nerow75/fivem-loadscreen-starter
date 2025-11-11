@@ -1,11 +1,23 @@
+// main.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
+document.documentElement.setAttribute('lang', 'fr');
+if (!document.title) document.title = 'Loading Screen';
+
+const rootEl = document.getElementById('root');
+if (!rootEl) {
+  // Fallback de sécurité si #root n'existe pas.
+  const el = document.createElement('div');
+  el.id = 'root';
+  document.body.appendChild(el);
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
+  </React.StrictMode>
 );

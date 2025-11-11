@@ -2,16 +2,21 @@
   "name": "loadscreen-fivem",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
+  "description": "Écran de chargement React optimisé pour FiveM",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node copy-fonts.js",
     "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "fivem",
+    "loadscreen",
+    "react",
+    "nui"
+  ],
+  "author": "NRW",
+  "license": "MIT",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",
     "@vitejs/plugin-react": "^5.1.0",
@@ -24,6 +29,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
-    "framer-motion": "^12.23.24"
+    "framer-motion": "^12.23.24",
+    "prop-types": "^15.8.1"
   }
 }

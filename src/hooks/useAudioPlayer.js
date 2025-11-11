@@ -1,84 +1,129 @@
-import { useEffect, useRef, useState } from 'react';
+// useAudioPlayer.js
+import { useEffect, useRef, useState } from "react";
 
-export const useAudioPlayer = (playlist) => {
+const FLAG_KEY = "nr:volume:init";
+const VALUE_KEY = "nr:volume";
+
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const clamp100 = (v) => Math.min(100, Math.max(0, v));
+
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+export const useAudioPlayer = (playlist = []) => {
   const audioRef = useRef(null);
+  const [shuffledPlaylist] = useState(() => shuffleArray(playlist));
+
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [volume, setVolume] = useState(() => 
-    Number(localStorage.getItem('nr_vol') ?? 30)
-  );
 
-  // Gestion du changement de piste
-  useEffect(() => {
-    if (!audioRef.current || !playlist.length) return;
-    
-    audioRef.current.src = playlist[trackIndex].url;
-    audioRef.current.loop = false;
-    audioRef.current.volume = volume / 100;
-    
-    if (isPlaying) {
-      audioRef.current.play().catch(() => {});
-    } else {
-      audioRef.current.pause();
+  const [volume, setVolume] = useState(() => {
+    try {
+      const already = localStorage.getItem(FLAG_KEY) === "1";
+      if (!already) {
+        localStorage.setItem(FLAG_KEY, "1");
+        localStorage.setItem(VALUE_KEY, "50");
+        return 50;
+      }
+      const saved = Number(localStorage.getItem(VALUE_KEY));
+      return Number.isFinite(saved) ? clamp100(saved) : 50;
+    } catch {
+      return 50;
     }
-  }, [trackIndex, isPlaying, playlist, volume]);
-
-  // Gestion du volume
+  });
   useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.volume = volume / 100;
-    localStorage.setItem('nr_vol', String(volume));
+    const el = audioRef.current;
+    if (!el) return;
+    el.volume = clamp01(volume / 100);
+    try {
+      localStorage.setItem(VALUE_KEY, String(clamp100(volume)));
+    } catch {}
   }, [volume]);
 
-  // Auto-play au premier clic/message
   useEffect(() => {
-    const tryPlay = () => audioRef.current?.play().catch(() => {});
-    
-    const handlePointer = () => {
-      tryPlay();
-      window.removeEventListener('pointerdown', handlePointer);
-    };
-    
-    const handleMessage = () => {
-      tryPlay();
-      window.removeEventListener('message', handleMessage);
+    const el = audioRef.current;
+    if (
+      !el ||
+      !Array.isArray(shuffledPlaylist) ||
+      shuffledPlaylist.length === 0
+    )
+      return;
+
+    const track = shuffledPlaylist[trackIndex % shuffledPlaylist.length];
+    if (!track?.url) return;
+
+    el.src = track.url;
+    el.loop = false;
+    el.volume = clamp01(volume / 100);
+
+    if (isPlaying) {
+      el.play().catch(() => {});
+    } else {
+      el.pause();
+    }
+  }, [trackIndex, isPlaying, shuffledPlaylist]);
+
+  useEffect(() => {
+    let triggered = false;
+    const tryPlay = () => {
+      if (triggered) return;
+      triggered = true;
+      audioRef.current?.play().catch(() => {});
     };
 
-    window.addEventListener('pointerdown', handlePointer);
-    window.addEventListener('message', handleMessage);
+    const onPointer = () => tryPlay();
+    const onKey = () => tryPlay();
+    const onMsg = () => tryPlay();
+
+    window.addEventListener("pointerdown", onPointer, { once: true });
+    window.addEventListener("keydown", onKey, { once: true });
+    window.addEventListener("message", onMsg, { once: true });
 
     return () => {
-      window.removeEventListener('pointerdown', handlePointer);
-      window.removeEventListener('message', handleMessage);
+      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("message", onMsg);
     };
   }, []);
 
   const handleEnded = () => {
-    setTrackIndex((i) => (i + 1) % playlist.length);
+    if (!shuffledPlaylist.length) return;
+    setTrackIndex((i) => (i + 1) % shuffledPlaylist.length);
   };
 
   const nextTrack = () => {
-    setTrackIndex((i) => (i + 1) % playlist.length);
+    if (!shuffledPlaylist.length) return;
+    setTrackIndex((i) => (i + 1) % shuffledPlaylist.length);
   };
 
   const previousTrack = () => {
-    setTrackIndex((i) => (i - 1 + playlist.length) % playlist.length);
+    if (!shuffledPlaylist.length) return;
+    setTrackIndex(
+      (i) => (i - 1 + shuffledPlaylist.length) % shuffledPlaylist.length
+    );
   };
 
-  const togglePlay = () => {
-    setIsPlaying((prev) => !prev);
-  };
+  const togglePlay = () => setIsPlaying((p) => !p);
 
   return {
     audioRef,
     trackIndex,
     isPlaying,
     volume,
-    setVolume,
+    setVolume: (v) => setVolume(clamp100(Number(v))),
     handleEnded,
     nextTrack,
     previousTrack,
     togglePlay,
-    currentTrack: playlist[trackIndex] || null,
+    currentTrack:
+      Array.isArray(shuffledPlaylist) && shuffledPlaylist.length
+        ? shuffledPlaylist[trackIndex % shuffledPlaylist.length]
+        : null,
   };
 };

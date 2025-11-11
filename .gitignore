@@ -1,37 +1,43 @@
-# Dependencies
+# Node / Vite / React
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Build output
 dist/
-build/
-
-# Editor directories
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS files
-.DS_Store
-Thumbs.db
+coverage/
+.vite/
+.cache/
 *.log
 
-# Environment variables
+# Fonts copiées / fichiers générés
+webfonts/
+copy-fonts.log
+
+# Environnements
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Systèmes d'exploitation
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Temporary files
+# Éditeurs / IDE
+.vscode/
+.idea/
+*.swp
+
+# Build temporaires
 *.tmp
-*.temp
-.cache/
+*.bak
+*.orig
+
+# Ressources lourdes (si locales)
+media/videos/*
+media/music/*
+!media/videos/.gitkeep
+!media/music/.gitkeep
+
+# Fichiers privés FiveM
+*.key
+*.licence
+*.rpf
+txData/

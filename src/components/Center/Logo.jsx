@@ -1,23 +1,32 @@
-import logoUrl from '../../assets/logo.png'; // ✅ chemin Vite bundlé
+// Logo.jsx
+import PropTypes from "prop-types";
+import logoUrl from "../../assets/logo.png";
 
-export const Logo = ({ progress = 0 }) => {
+export const Logo = ({ width = "clamp(240px, 55vw, 360px)" }) => {
   return (
     <img
       src={logoUrl}
       alt="Logo"
+      loading="eager"
+      decoding="async"
       style={{
-        width: 400,
-        height: 'auto',
-        objectFit: 'contain',
-        display: 'block',
-        margin: '0 auto',
+        width,
+        height: "auto",
+        objectFit: "contain",
+        display: "block",
+        margin: "0 auto",
         zIndex: 5,
-        filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.4))',
+        filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.4))",
       }}
       onError={(e) => {
-        console.warn('Logo introuvable:', logoUrl);
-        e.currentTarget.style.border = '2px solid red';
+        console.warn("Logo introuvable:", logoUrl);
+        e.currentTarget.style.border = "2px solid #B00020";
+        e.currentTarget.alt = "Logo manquant";
       }}
     />
   );
+};
+
+Logo.propTypes = {
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
