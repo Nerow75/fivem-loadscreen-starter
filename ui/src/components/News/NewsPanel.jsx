@@ -1,7 +1,11 @@
 // NewsPanel.jsx
+// Composant d’affichage des actualités du serveur sous forme de panneau flottant.
+// Présente un effet “verre liquide” (glassmorphism) et limite l’affichage aux trois dernières actualités.
+
 import PropTypes from "prop-types";
 import { THEME } from "../../config";
 
+// Style de base pour le panneau (effet verre liquide)
 const liquidGlass = {
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
@@ -16,8 +20,10 @@ const liquidGlass = {
   WebkitBackdropFilter: "blur(12px) saturate(180%)",
 };
 
+// Composant individuel d’une actualité (élément de liste)
 const NewsItem = ({ item, isLast }) => {
   if (!item) return null;
+
   return (
     <li
       style={{
@@ -28,9 +34,12 @@ const NewsItem = ({ item, isLast }) => {
       }}
     >
       <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 8 }}>
+        {/* Icône d’illustration de l’actualité */}
         <span aria-hidden="true" style={{ fontSize: "clamp(14px,3.5vw,16px)" }}>
           {item.icon}
         </span>
+
+        {/* Contenu principal : titre, description et date */}
         <div>
           {item.title && (
             <h3
@@ -44,6 +53,7 @@ const NewsItem = ({ item, isLast }) => {
               {item.title}
             </h3>
           )}
+
           {item.description && (
             <p
               style={{
@@ -56,6 +66,7 @@ const NewsItem = ({ item, isLast }) => {
               {item.description}
             </p>
           )}
+
           {item.date && (
             <div
               style={{
@@ -73,6 +84,7 @@ const NewsItem = ({ item, isLast }) => {
   );
 };
 
+// Définition des types de propriétés pour un élément d’actualité
 NewsItem.propTypes = {
   item: PropTypes.shape({
     icon: PropTypes.node,
@@ -83,10 +95,12 @@ NewsItem.propTypes = {
   isLast: PropTypes.bool,
 };
 
+// Composant principal du panneau d’actualités
 export const NewsPanel = ({ news }) => {
   const list = Array.isArray(news) ? news.filter(Boolean) : [];
   if (!list.length) return null;
 
+  // Limite l’affichage aux trois premières actualités
   const sliced = list.slice(0, 3);
 
   return (
@@ -103,6 +117,7 @@ export const NewsPanel = ({ news }) => {
         ...liquidGlass,
       }}
     >
+      {/* En-tête du panneau : titre et icône */}
       <header
         style={{
           color: THEME?.accent || "#fff",
@@ -122,6 +137,7 @@ export const NewsPanel = ({ news }) => {
         <span>DERNIÈRES ACTUALITÉS</span>
       </header>
 
+      {/* Liste des actualités */}
       <ul
         role="list"
         aria-label="Liste des actualités"
@@ -136,8 +152,9 @@ export const NewsPanel = ({ news }) => {
         ))}
       </ul>
 
+      {/* Styles internes pour l’adaptation mobile */}
       <style>{`
-        /* Mobile : recentre le panneau et libère le bord droit */
+        /* Mobile : recentre le panneau et ajuste les marges */
         @media (max-width: 720px) {
           [aria-label="Dernières actualités"]{
             right: 50% !important;
@@ -152,6 +169,7 @@ export const NewsPanel = ({ news }) => {
   );
 };
 
+// Définition des types de propriétés pour la liste complète d’actualités
 NewsPanel.propTypes = {
   news: PropTypes.arrayOf(
     PropTypes.shape({

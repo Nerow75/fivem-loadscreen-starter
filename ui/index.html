@@ -1,17 +1,24 @@
+<!-- index.html -->
+<!-- Fichier principal du projet : point d'entrée de l'application React pour le chargement FiveM -->
+
 <!DOCTYPE html>
 <html lang="fr">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Métadonnées SEO et accessibilité -->
   <meta name="description" content="Écran de chargement interactif pour serveur FiveM Sun Andreas" />
   <meta name="theme-color" content="#22A7E8" />
+
+  <!-- Titre affiché dans l’onglet du navigateur -->
   <title>Chargement</title>
 
-  <!-- Préchargement : police & icônes pour réduire le LCP -->
+  <!-- Icône de l’application (favicon) -->
   <link rel="icon" type="image/png" href="logo.png" />
 
-  <!-- Accessibilité : éviter les transitions inutiles -->
+  <!-- Règle d’accessibilité : réduction des animations pour utilisateurs sensibles -->
   <style>
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -24,10 +31,10 @@
 </head>
 
 <body>
-  <!-- Racine React -->
+  <!-- Élément racine pour le montage React -->
   <div id="root" role="application" aria-label="Écran de chargement du serveur"></div>
 
-  <!-- Script principal -->
+  <!-- Script d’initialisation de l’application -->
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

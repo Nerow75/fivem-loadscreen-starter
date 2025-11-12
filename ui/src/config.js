@@ -1,5 +1,7 @@
 // config.js
-// Palette Couleurs
+// Configuration de l'application
+
+// Couleurs du thème
 export const THEME = {
   primary: "#22A7E8",
   secondary: "#5E2CA5",
@@ -8,6 +10,7 @@ export const THEME = {
   primaryLight: "#9ADCF8",
 };
 
+// Liens vers les sites web
 export const LINKS = {
   discord: "https://discord.gg/YV4xnhfWbC",
   shop: "https://sunandreas.tebex.io",
@@ -17,9 +20,10 @@ export const LINKS = {
 // Vidéos de fond : préférer des fichiers locaux (webm/mp4) plutôt que YouTube.
 export const VIDEOS = {
   list: ["https://www.youtube.com/watch?v=QkkoHAzjnUs"],
+  // list: ["https://www.youtube.com/exemple"],["/media/videos/video.mp4"],
 };
 
-// Playlist audio : titres courts et URL locales.
+// Musique : préférer des fichiers locaux (mp3) plutôt que YouTube.
 export const MUSIC = {
   list: [
     { title: "Night — J2S", url: "media/music/Night.mp3" },
@@ -27,10 +31,11 @@ export const MUSIC = {
       title: "Bienvenue sur Sun Andreas — J2S",
       url: "media/music/Bienvenue_Sur_SunAndreas.mp3",
     },
+    // { title: "Example", url: "media/music/Example.mp3" },
   ],
 };
 
-// Phrases de tête : messages courts et utiles
+// Phrases en haut de l'application
 export const TOP_PHRASES = [
   "Utilise ton Nom et Prénom RP sur le Discord.",
   "Consulte le Panel pour suivre ton personnage et les événements.",
@@ -41,7 +46,7 @@ export const TOP_PHRASES = [
   "Les actions ont des conséquences. Choisis-les avec sagesse.",
 ];
 
-// Actualités (3–4 items max, format JJ/MM/AAAA)
+// News
 export const NEWS = [
   {
     icon: "🎃",
@@ -67,8 +72,10 @@ export const NEWS = [
     description: "Nouveaux packs disponibles sur Tebex.",
     date: "25/10/2025",
   },
+  // { icon: "🎉", title: "Example", description: "Example", date: "01/01/2025" },
 ];
 
+// Version du serveur
 export const SERVER = {
   version: "v1.0 — 04/11/2025",
 };

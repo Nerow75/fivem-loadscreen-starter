@@ -1,7 +1,11 @@
 // MusicPlayer.jsx
+// Composant d’interface de lecteur audio minimaliste.
+// Gère la lecture, la pause et la navigation entre les pistes avec une présentation claire et responsive.
+
 import PropTypes from "prop-types";
 import { THEME } from "../../config";
 
+// Style de base des boutons (verre translucide, effet lumineux et réactivité au survol)
 const baseBtn = {
   display: "inline-flex",
   alignItems: "center",
@@ -28,6 +32,7 @@ const baseBtn = {
     "transform 120ms ease, box-shadow 120ms ease, background 150ms ease",
 };
 
+// Style standardisé des icônes SVG (dimension et teinte)
 const iconStyle = {
   display: "block",
   width: "1.1em",
@@ -35,6 +40,7 @@ const iconStyle = {
   fill: THEME?.primary || "#fff",
 };
 
+// Définition des icônes de contrôle (lecture, pause, précédent, suivant)
 const IconPrevious = () => (
   <svg viewBox="0 0 24 24" style={iconStyle} aria-hidden="true">
     <path d="M6 6h2v12H6zM20 6v12L10 12l10-6z" />
@@ -59,16 +65,18 @@ const IconNext = () => (
   </svg>
 );
 
+// Composant principal du lecteur audio
 export const MusicPlayer = ({
-  isPlaying,
-  onTogglePlay,
-  onPrevious,
-  onNext,
-  currentTrack,
-  volume = 50,
+  isPlaying, // État de lecture en cours
+  onTogglePlay, // Fonction de bascule lecture/pause
+  onPrevious, // Fonction de navigation vers la piste précédente
+  onNext, // Fonction de navigation vers la piste suivante
+  currentTrack, // Données de la piste active (titre, métadonnées, etc.)
+  volume = 50, // Niveau de volume (actuellement non affiché)
 }) => {
   return (
     <div className="text-fluid">
+      {/* Bloc regroupant les contrôles de lecture */}
       <div
         role="group"
         aria-label="Contrôles de lecture"
@@ -80,6 +88,7 @@ export const MusicPlayer = ({
           gap: "1em",
         }}
       >
+        {/* Bouton précédent */}
         <button
           type="button"
           onClick={onPrevious}
@@ -99,6 +108,7 @@ export const MusicPlayer = ({
           <IconPrevious />
         </button>
 
+        {/* Bouton lecture/pause */}
         <button
           type="button"
           onClick={onTogglePlay}
@@ -118,6 +128,7 @@ export const MusicPlayer = ({
           {isPlaying ? <IconPause /> : <IconPlay />}
         </button>
 
+        {/* Bouton suivant */}
         <button
           type="button"
           onClick={onNext}
@@ -138,6 +149,7 @@ export const MusicPlayer = ({
         </button>
       </div>
 
+      {/* Affichage du titre de la piste actuelle */}
       <div
         aria-live="polite"
         aria-atomic="true"
@@ -163,13 +175,14 @@ export const MusicPlayer = ({
   );
 };
 
+// Définition des types de propriétés pour validation
 MusicPlayer.propTypes = {
-  isPlaying: PropTypes.bool,
-  onTogglePlay: PropTypes.func,
-  onPrevious: PropTypes.func,
-  onNext: PropTypes.func,
+  isPlaying: PropTypes.bool, // Indicateur de lecture active
+  onTogglePlay: PropTypes.func, // Fonction pour lecture/pause
+  onPrevious: PropTypes.func, // Fonction pour revenir à la piste précédente
+  onNext: PropTypes.func, // Fonction pour passer à la piste suivante
   currentTrack: PropTypes.shape({
-    title: PropTypes.string,
+    title: PropTypes.string, // Titre de la piste en cours
   }),
-  volume: PropTypes.number,
+  volume: PropTypes.number, // Volume courant (optionnel)
 };

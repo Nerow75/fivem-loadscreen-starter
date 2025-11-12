@@ -1,15 +1,21 @@
 // ProgressBar.jsx
+// Composant d’affichage de la barre de progression du chargement.
+// Intègre un effet lumineux animé et un texte d’état associé.
+
 import PropTypes from "prop-types";
 import { THEME as RAW } from "../../config";
 
+// Définition du thème visuel (couleurs principales et secondaires)
 const THEME = {
   primary: RAW?.primary || "#2ea9ff",
   primaryLight: RAW?.primaryLight || "#7cc7ff",
 };
 
 export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
+  // Normalisation de la valeur de progression entre 0 et 100
   const value = Math.max(0, Math.min(100, Number(progress) || 0));
 
+  // Style d’accessibilité (contenu uniquement visible par les lecteurs d’écran)
   const srOnly = {
     position: "absolute",
     width: 1,
@@ -30,11 +36,11 @@ export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
         transform: "translateX(-50%)",
         bottom: "clamp(14px, 6vh, 42px)",
         zIndex: 5,
-        // Largeur qui se rÃ©duit progressivement selon la taille d'Ã©cran
-        width: "clamp(280px, 85vw, 900px)",
+        width: "clamp(280px, 85vw, 900px)", // Largeur adaptative selon la taille d’écran
         paddingInline: "clamp(8px, 2vw, 16px)",
       }}
     >
+      {/* Conteneur principal de la barre de progression */}
       <div
         role="progressbar"
         aria-label="Progression du chargement"
@@ -53,22 +59,25 @@ export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
           position: "relative",
         }}
       >
+        {/* Texte caché pour les technologies d’assistance */}
         <span style={srOnly}>
-          {loadingText ? `${loadingText} Ã¢â‚¬â€ ` : ""}
+          {loadingText ? `${loadingText} — ` : ""}
           {Math.floor(value)} pour cent
         </span>
 
+        {/* Remplissage de la barre en fonction de la progression */}
         <div
           style={{
             height: "100%",
             width: `${value}%`,
             borderRadius: 999,
-            transition: "width .25s ease",
+            transition: "width .25s ease", // Animation fluide de progression
             background: `linear-gradient(90deg, ${THEME.primary}, ${THEME.primaryLight})`,
             boxShadow: `0 0 18px ${THEME.primary}, 0 0 36px ${THEME.primary}80`,
             position: "relative",
           }}
         >
+          {/* Effet lumineux animé (dégradé en translation) */}
           <div
             aria-hidden="true"
             style={{
@@ -82,6 +91,7 @@ export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
         </div>
       </div>
 
+      {/* Affichage du texte descriptif sous la barre */}
       <div
         style={{
           marginTop: 8,
@@ -97,6 +107,7 @@ export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
         {Math.floor(value)}%
       </div>
 
+      {/* Règles de responsivité pour écrans de petite taille */}
       <style>{`
         @media (max-width: 720px) {
           [role="progressbar"]{ height: 10px !important; }
@@ -110,7 +121,8 @@ export const ProgressBar = ({ progress = 0, loadingText = "" }) => {
   );
 };
 
+// Validation des types de propriétés
 ProgressBar.propTypes = {
-  progress: PropTypes.number,
-  loadingText: PropTypes.string,
+  progress: PropTypes.number, // Valeur numérique entre 0 et 100
+  loadingText: PropTypes.string, // Texte facultatif d’état de chargement
 };

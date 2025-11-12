@@ -1,7 +1,11 @@
 // Clock.jsx
+// Composant d’affichage des informations principales du header : heure, date et nombre de joueurs.
+// Présente un style “glassmorphism” et un effet d’animation liquide décoratif.
+
 import PropTypes from "prop-types";
 import { THEME } from "../../config";
 
+// Style visuel principal avec effet verre et ombres internes
 const liquidGlassStyle = {
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
@@ -19,11 +23,12 @@ const liquidGlassStyle = {
 };
 
 export const Clock = ({
-  currentTime,
-  currentDate,
-  playerCount,
-  maxPlayers,
+  currentTime, // Heure actuelle formatée
+  currentDate, // Date actuelle formatée
+  playerCount, // Nombre de joueurs connectés
+  maxPlayers, // Capacité maximale du serveur
 }) => {
+  // Sécurisation de l’affichage du ratio de joueurs
   const safePlayers =
     Number.isFinite(playerCount) &&
     Number.isFinite(maxPlayers) &&
@@ -34,7 +39,7 @@ export const Clock = ({
   return (
     <section
       role="note"
-      aria-label="Informations en-tÃªte : heure, date et joueurs en ligne"
+      aria-label="Informations en-tête : heure, date et joueurs en ligne"
       style={{
         position: "fixed",
         top: "clamp(10px, 2vh, 18px)",
@@ -51,7 +56,7 @@ export const Clock = ({
         ...liquidGlassStyle,
       }}
     >
-      {/* Effet de brillance liquide animé */}
+      {/* Effet visuel de brillance animée sur le fond */}
       <div
         aria-hidden="true"
         style={{
@@ -68,6 +73,7 @@ export const Clock = ({
         }}
       />
 
+      {/* Animation CSS de déplacement et variation d’opacité */}
       <style>{`
         @keyframes liquidShine {
           0%, 100% {
@@ -88,6 +94,8 @@ export const Clock = ({
           }
         }
       `}</style>
+
+      {/* Bloc affichant l’heure actuelle */}
       {currentTime && (
         <div
           style={{
@@ -111,6 +119,7 @@ export const Clock = ({
         </div>
       )}
 
+      {/* Bloc affichant la date textuelle */}
       {currentDate && (
         <div
           style={{
@@ -119,11 +128,12 @@ export const Clock = ({
             opacity: 0.9,
           }}
         >
-          {/* date textuelle lisible (pas dâ€™attribut machine car format inconnu) */}
+          {/* Texte brut (format non normé pour l’attribut dateTime) */}
           {currentDate}
         </div>
       )}
 
+      {/* Bloc affichant le nombre de joueurs connectés */}
       {safePlayers && (
         <div
           style={{
@@ -149,6 +159,7 @@ export const Clock = ({
   );
 };
 
+// Validation des propriétés pour cohérence typée
 Clock.propTypes = {
   currentTime: PropTypes.string,
   currentDate: PropTypes.string,

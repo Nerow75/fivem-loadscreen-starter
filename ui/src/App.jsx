@@ -1,11 +1,14 @@
 // App.jsx
+// Point d'entrée principal de l'interface utilisateur.
+// Structure l'affichage global du loader et gère l'intégration des hooks et composants principaux.
 
+// Importation des dépendances externes et des styles
 import { useEffect, useState } from "react";
 import "./index.css";
 import "./styles/animations.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-// Hooks
+// Importation des hooks personnalisés
 import { useNUIMessages } from "./hooks/useNUIMessages";
 import { useClock } from "./hooks/useClock";
 import { useAudioPlayer } from "./hooks/useAudioPlayer";
@@ -13,7 +16,7 @@ import { useParticles } from "./hooks/useParticles";
 import { useMouseTrail } from "./hooks/useMouseTrail";
 import { useKeyboardControls } from "./hooks/useKeyboardControls";
 
-// Composants
+// Importation des composants visuels
 import { VideoBackground } from "./components/Background/VideoBackground";
 import { Overlay } from "./components/Background/Overlay";
 import { Particles } from "./components/Background/Particles";
@@ -28,22 +31,23 @@ import { NewsPanel } from "./components/News/NewsPanel";
 import { ProgressBar } from "./components/Footer/ProgressBar";
 import { Version } from "./components/Footer/Version";
 
-// Config
+// Importation de la configuration globale
 import { VIDEOS, MUSIC, TOP_PHRASES, NEWS, SERVER } from "./config";
 
-// PrÃ©paration listes sÃ»res
+// Préparation des listes de vidéos et musiques avec vérification de type
 const videos = Array.isArray(VIDEOS?.list) ? VIDEOS.list : [];
 const playlist = Array.isArray(MUSIC?.list) ? MUSIC.list : [];
 
 export default function App() {
-  const [maxPlayers] = useState(128);
+  const [maxPlayers] = useState(128); // Nombre maximal de joueurs affiché
 
-  // Hooks custom
-  const { progress, loadingText, playerCount } = useNUIMessages();
-  const { currentTime, currentDate } = useClock();
-  const { canvasRef: particlesCanvasRef } = useParticles();
-  const { canvasRef: trailCanvasRef } = useMouseTrail();
+  // Initialisation des hooks custom
+  const { progress, loadingText, playerCount } = useNUIMessages(); // Gestion des messages et progression du chargement
+  const { currentTime, currentDate } = useClock(); // Gestion de l'horloge temps réel
+  const { canvasRef: particlesCanvasRef } = useParticles(); // Initialisation du canvas des particules
+  const { canvasRef: trailCanvasRef } = useMouseTrail(); // Initialisation du canvas pour la traînée de souris
 
+  // Gestion du lecteur audio via hook dédié
   const {
     audioRef,
     isPlaying,
@@ -56,7 +60,7 @@ export default function App() {
     currentTrack,
   } = useAudioPlayer(playlist);
 
-  // Contrôles clavier
+  // Configuration des contrôles clavier (navigation musicale et volume)
   useKeyboardControls({
     onPrevious: previousTrack,
     onNext: nextTrack,
@@ -64,7 +68,7 @@ export default function App() {
     onVolumeDown: () => setVolume(Math.max(0, volume - 5)),
   });
 
-  // AccessibilitÃ© : focus visible direct au skip-link
+  // Accessibilité : focus automatique sur la zone de contenu lors de l'utilisation du lien d'évitement
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === "#contenu") {
@@ -83,13 +87,13 @@ export default function App() {
         backgroundColor: "#000",
       }}
     >
-      {/* Arrière-plan */}
+      {/* Arrière-plan multimédia */}
       <VideoBackground sources={videos} />
       <Overlay zIndex={2} />
       <MouseTrail canvasRef={trailCanvasRef} zIndex={3} />
       <Particles canvasRef={particlesCanvasRef} zIndex={4} opacity={1} />
 
-      {/* Lien d'Ã©vitement (accessibilitÃ©) */}
+      {/* Lien d’évitement pour la navigation clavier */}
       <a
         href="#contenu"
         className="skip-link"
@@ -111,7 +115,7 @@ export default function App() {
         Aller au contenu
       </a>
 
-      {/* Conteneur principal */}
+      {/* Structure principale de l'interface */}
       <div
         className="ui-scale"
         style={{
@@ -124,7 +128,7 @@ export default function App() {
           animation: "nrFadeIn 600ms ease both",
         }}
       >
-        {/* En-tÃªte sÃ©mantique */}
+        {/* En-tête : affichage de l'heure, du nombre de joueurs et des liens sociaux */}
         <header
           role="banner"
           aria-label="Informations serveur et navigation"
@@ -140,7 +144,7 @@ export default function App() {
           <SocialLinks />
         </header>
 
-        {/* Contenu central sÃ©mantique */}
+        {/* Section principale : logo, lecteur musical, contrôle du volume */}
         <main
           id="contenu"
           tabIndex={-1}
@@ -181,15 +185,15 @@ export default function App() {
           </div>
         </main>
 
-        {/* ActualitÃ©s / infos secondaires */}
+        {/* Section d'actualités et informations complémentaires */}
         <section
-          aria-label="ActualitÃ©s"
+          aria-label="Actualités"
           style={{ width: "min(1100px, 100%)", margin: "0 auto" }}
         >
           <NewsPanel news={NEWS} />
         </section>
 
-        {/* Pied de page sÃ©mantique */}
+        {/* Pied de page : progression du chargement et version du serveur */}
         <footer
           role="contentinfo"
           aria-label="Progression du chargement et version"
@@ -199,7 +203,7 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Lecteur audio contrÃ´lÃ© par hook - non visible, accessible via contrÃ´les dÃ©diÃ©s */}
+      {/* Élément audio invisible contrôlé par les hooks */}
       <audio ref={audioRef} onEnded={handleEnded} aria-hidden="true" />
     </div>
   );

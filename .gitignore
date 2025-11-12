@@ -1,43 +1,45 @@
-# Node / Vite / React
+# .gitignore
+# Fichier de configuration Git pour exclure les fichiers temporaires, de configuration locale et de build.
+
+# Ignorer les dépendances installées via npm ou yarn
 node_modules/
+
+# Ignorer les fichiers de build générés
 dist/
-coverage/
-.vite/
-.cache/
+build/
+out/
+
+# Ignorer les fichiers de cache et temporaires
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+.temp/
 
-# Fonts copiées / fichiers générés
-webfonts/
-copy-fonts.log
-
-# Environnements
+# Ignorer les fichiers d’environnement contenant des variables sensibles
 .env
 .env.local
 .env.*.local
 
-# Systèmes d'exploitation
+# Ignorer les fichiers système courants
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# Éditeurs / IDE
-.vscode/
+# Ignorer les fichiers générés par les éditeurs
 .idea/
+.vscode/
 *.swp
 
-# Build temporaires
-*.tmp
-*.bak
-*.orig
+# Ignorer les rapports et fichiers de couverture de tests
+coverage/
+*.lcov
 
-# Ressources lourdes (si locales)
-media/videos/*
-media/music/*
-!media/videos/.gitkeep
-!media/music/.gitkeep
+# Ignorer les artefacts de verrouillage de dépendances facultatifs
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Fichiers privés FiveM
-*.key
-*.licence
-*.rpf
-txData/
+# Ignorer les fichiers générés automatiquement par les outils de bundling ou compilation
+*.map

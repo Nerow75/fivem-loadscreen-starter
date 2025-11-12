@@ -1,12 +1,18 @@
 // useAudioPlayer.js
+// Hook personnalisé de gestion de lecteur audio pour une playlist locale.
+// Fournit un contrôle complet sur la lecture, le volume et la navigation entre les pistes.
+
 import { useEffect, useRef, useState } from "react";
 
+// Clés utilisées dans localStorage pour la gestion du volume
 const FLAG_KEY = "nr:volume:init";
 const VALUE_KEY = "nr:volume";
 
-const clamp01 = (v) => Math.min(1, Math.max(0, v));
-const clamp100 = (v) => Math.min(100, Math.max(0, v));
+// Fonctions utilitaires de limitation des valeurs
+const clamp01 = (v) => Math.min(1, Math.max(0, v)); // Bornage entre 0 et 1
+const clamp100 = (v) => Math.min(100, Math.max(0, v)); // Bornage entre 0 et 100
 
+// Fonction de mélange aléatoire (Fisher-Yates)
 const shuffleArray = (array) => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -17,12 +23,13 @@ const shuffleArray = (array) => {
 };
 
 export const useAudioPlayer = (playlist = []) => {
-  const audioRef = useRef(null);
-  const [shuffledPlaylist] = useState(() => shuffleArray(playlist));
+  const audioRef = useRef(null); // Référence vers l’élément audio
+  const [shuffledPlaylist] = useState(() => shuffleArray(playlist)); // Playlist mélangée au montage
 
-  const [trackIndex, setTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [trackIndex, setTrackIndex] = useState(0); // Index de la piste courante
+  const [isPlaying, setIsPlaying] = useState(true); // État de lecture
 
+  // Initialisation du volume avec persistance dans localStorage
   const [volume, setVolume] = useState(() => {
     try {
       const already = localStorage.getItem(FLAG_KEY) === "1";
@@ -37,6 +44,8 @@ export const useAudioPlayer = (playlist = []) => {
       return 50;
     }
   });
+
+  // Application du volume au lecteur audio et mise à jour du stockage
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
@@ -46,6 +55,7 @@ export const useAudioPlayer = (playlist = []) => {
     } catch {}
   }, [volume]);
 
+  // Gestion de la lecture en fonction de l’état et de la piste courante
   useEffect(() => {
     const el = audioRef.current;
     if (
@@ -69,6 +79,7 @@ export const useAudioPlayer = (playlist = []) => {
     }
   }, [trackIndex, isPlaying, shuffledPlaylist]);
 
+  // Déblocage de la lecture automatique sur interaction utilisateur ou message externe
   useEffect(() => {
     let triggered = false;
     const tryPlay = () => {
@@ -92,16 +103,19 @@ export const useAudioPlayer = (playlist = []) => {
     };
   }, []);
 
+  // Gestion de fin de piste (lecture suivante)
   const handleEnded = () => {
     if (!shuffledPlaylist.length) return;
     setTrackIndex((i) => (i + 1) % shuffledPlaylist.length);
   };
 
+  // Lecture de la piste suivante
   const nextTrack = () => {
     if (!shuffledPlaylist.length) return;
     setTrackIndex((i) => (i + 1) % shuffledPlaylist.length);
   };
 
+  // Lecture de la piste précédente
   const previousTrack = () => {
     if (!shuffledPlaylist.length) return;
     setTrackIndex(
@@ -109,21 +123,23 @@ export const useAudioPlayer = (playlist = []) => {
     );
   };
 
+  // Basculement lecture/pause
   const togglePlay = () => setIsPlaying((p) => !p);
 
+  // Retour des propriétés et méthodes exposées
   return {
-    audioRef,
-    trackIndex,
-    isPlaying,
-    volume,
-    setVolume: (v) => setVolume(clamp100(Number(v))),
-    handleEnded,
-    nextTrack,
-    previousTrack,
-    togglePlay,
+    audioRef, // Référence au lecteur audio
+    trackIndex, // Index de la piste en cours
+    isPlaying, // État de lecture
+    volume, // Niveau de volume actuel
+    setVolume: (v) => setVolume(clamp100(Number(v))), // Mise à jour sécurisée du volume
+    handleEnded, // Gestionnaire d’événement fin de piste
+    nextTrack, // Fonction suivante
+    previousTrack, // Fonction précédente
+    togglePlay, // Fonction de bascule lecture/pause
     currentTrack:
       Array.isArray(shuffledPlaylist) && shuffledPlaylist.length
         ? shuffledPlaylist[trackIndex % shuffledPlaylist.length]
-        : null,
+        : null, // Piste courante
   };
 };

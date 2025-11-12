@@ -1,7 +1,13 @@
 // SocialLinks.jsx
+// Composant d’affichage des liens externes (Discord, boutique, panel).
+// Utilise un style “glassmorphism” et gère l’ouverture sécurisée des liens externes.
+
 import PropTypes from "prop-types";
 import { THEME, LINKS } from "../../config";
 
+// Fonction d’ouverture sécurisée d’un lien externe
+// - Utilise invokeNative dans un environnement NUI (FiveM)
+// - Fallback sur window.open pour le navigateur standard
 const openExternal = (url) => {
   try {
     if (typeof window.invokeNative === "function") {
@@ -10,17 +16,18 @@ const openExternal = (url) => {
       window.open(url, "_blank", "noopener,noreferrer");
     }
   } catch {
-    // si l'ouverture Ã©choue, on ne jette pas.
+    // Échec silencieux pour éviter les erreurs bloquantes
   }
 };
 
+// Style visuel des boutons de lien (effet verre et animation légère)
 const linkBoxStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   width: "clamp(38px, 4.8vw, 46px)",
   height: "clamp(38px, 4.8vw, 46px)",
-  borderRadius: 999,
+  borderRadius: 999, // Forme circulaire
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
   border: "1px solid rgba(255,255,255,0.18)",
@@ -38,8 +45,10 @@ const linkBoxStyle = {
   outlineOffset: 3,
 };
 
+// Composant bouton individuel représentant un lien social externe
 const LinkButton = ({ href, title, icon, label }) => {
   if (!href) return null;
+
   return (
     <a
       href={href}
@@ -47,10 +56,12 @@ const LinkButton = ({ href, title, icon, label }) => {
       title={title}
       target="_blank"
       rel="noopener noreferrer"
+      // Ouverture sécurisée via la fonction utilitaire
       onClick={(e) => {
         e.preventDefault();
         openExternal(href);
       }}
+      // Effets visuels au survol et focus
       onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.06)")}
       onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1.0)")}
       onFocus={(e) =>
@@ -59,6 +70,7 @@ const LinkButton = ({ href, title, icon, label }) => {
       onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
       style={linkBoxStyle}
     >
+      {/* Icône du réseau ou service externe */}
       <i
         className={icon}
         aria-hidden="true"
@@ -68,6 +80,7 @@ const LinkButton = ({ href, title, icon, label }) => {
   );
 };
 
+// Définition des types de propriétés pour validation
 LinkButton.propTypes = {
   href: PropTypes.string,
   title: PropTypes.string,
@@ -75,6 +88,7 @@ LinkButton.propTypes = {
   label: PropTypes.string,
 };
 
+// Composant principal regroupant les liens sociaux
 export const SocialLinks = () => (
   <nav
     aria-label="Liens externes"
@@ -87,18 +101,23 @@ export const SocialLinks = () => (
       gap: "clamp(8px, 1.2vw, 10px)",
     }}
   >
+    {/* Bouton Discord */}
     <LinkButton
       href={LINKS?.discord}
       title="Rejoindre le Discord"
       label="Discord"
       icon="fa-brands fa-discord"
     />
+
+    {/* Bouton Boutique */}
     <LinkButton
       href={LINKS?.shop}
-      title="AccÃ©der Ã  la boutique"
+      title="Accéder à la boutique"
       label="Boutique"
       icon="fa-solid fa-shop"
     />
+
+    {/* Bouton Panel */}
     <LinkButton
       href={LINKS?.panel}
       title="Ouvrir le panel"

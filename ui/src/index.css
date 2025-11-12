@@ -1,14 +1,9 @@
-/* index.css
-   RÃ´le : styles globaux sÃ»rs et minimalistes.
-   AccessibilitÃ© : focus visibles, skip-link, support reduced motion.
-   Responsive : typographies et espacements fluides. */
-
-/* Tailwind (si utilisÃ© par le projet) */
+/* index.css */
+/* Tailwind (si utilisé par le projet) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Reset de base et typographie lisible */
+/* Reset de base et typographie lisible (si utilisé par le projet) */
 :root {
   --nr-bg: #000;
   --nr-text: #ffffff;
@@ -16,26 +11,26 @@
   --nr-base: clamp(14px, 1.6vw, 16px);
   --ui-scale: 1;
 }
-
+/* Box-sizing pour les éléments HTML */
 * {
   box-sizing: border-box;
 }
+/* Hauteur et largeur de l'écran */
 html,
 body,
 #root {
   height: 100%;
 }
-
+/* Typo fluide : 15px à 17px selon la largeur */
 html {
-  /* Typo fluide : 15pxâ€“17px selon la largeur */
   font-size: var(--nr-base);
   -webkit-text-size-adjust: 100%;
 }
-
+/* Marges et paddings par défaut */
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* plein Ã©cran sans scroll */
+  overflow: hidden;
   color: var(--nr-text);
   background: var(--nr-bg);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
@@ -44,14 +39,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* Focus visibles accessibles mÃªme sans Tailwind */
+/* Focus visibles accessibles même sans Tailwind */
 :focus-visible {
   outline: 3px solid var(--nr-focus);
   outline-offset: 3px;
 }
-
-/* Lien dâ€™Ã©vitement pour aller au contenu */
+/* Lien d'évitement pour aller au contenu */
 .skip-link {
   position: absolute;
   left: 8px;
@@ -67,8 +60,7 @@ body {
 .skip-link:focus {
   transform: translateY(0);
 }
-
-/* VidÃ©o de fond plein Ã©cran */
+/* Vidéo de fond plein écran */
 .video-background {
   position: fixed;
   inset: 0;
@@ -76,18 +68,16 @@ body {
   height: 100vh;
   object-fit: cover;
   z-index: -1;
-  background: #000; /* Ã©vite flash blanc */
+  background: #000;
 }
-
-/* Overlay de contraste (si utilisÃ© en classe) */
+/* Overlay de contraste (si utilisé en classe) */
 .overlay {
   position: fixed;
   inset: 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.65));
   z-index: 0;
 }
-
-/* Pile centrale (logo/contrÃ´les) */
+/* Pile centrale (logo/contrôles) */
 .center-stack {
   display: flex;
   flex-direction: column;
@@ -97,15 +87,13 @@ body {
 .center-stack > * {
   margin: 0 !important;
 }
-
-/* Ajustement vertical sur grands Ã©crans */
+/* Ajustement vertical sur grands écrans */
 @media (min-height: 800px) {
   .center-stack {
     gap: clamp(10px, 1.6vw, 16px);
   }
 }
-
-/* RÃ©duction des animations si demandÃ© */
+/* Réduction des animations si demandé */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 1ms !important;
@@ -114,16 +102,14 @@ body {
     scroll-behavior: auto !important;
   }
 }
-
 /* Renforts responsive globaux */
-
 :root {
   --nr-base: clamp(14px, 1.6vw, 16px);
 }
 html {
   font-size: var(--nr-base);
 }
-
+/* Réservation d'espace pour éviter chevauchement News vs ProgressBar */
 @media (max-width: 720px) {
   :root {
     --nr-base: clamp(13px, 2.2vw, 15px);
@@ -135,7 +121,7 @@ html {
     gap: clamp(6px, 2.6vw, 12px);
   }
 }
-
+/* Réduction de la taille des éléments sur petits écrans */
 @media (max-width: 520px) {
   :root {
     --nr-base: clamp(12px, 3vw, 14px);
@@ -144,20 +130,18 @@ html {
     gap: clamp(6px, 3vw, 10px);
   }
 }
-
 @media (max-width: 380px) {
   :root {
     --nr-base: clamp(11px, 3.6vw, 13px);
   }
 }
-
-/* Adoucit les ombres sur petits Ã©crans pour lisibilitÃ© */
+/* Adoucit les ombres sur petits écrans pour lisibilité */
 @media (max-width: 720px) {
   * {
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
   }
 }
-
+/* Réduction de la taille des éléments sur petits écrans */
 @media (max-width: 980px) {
   .ui-scale {
     --type-scale: clamp(13px, 2.2vw, 15px);
@@ -178,23 +162,19 @@ html {
     --type-scale: clamp(10px, 4.4vw, 12px);
   }
 }
-
 .ui-scale {
-  /* base lisible desktop */
   --type-scale: clamp(14px, 1.6vw, 16px);
   font-size: var(--type-scale);
 }
-
 .text-fluid {
   font-size: 1em !important;
 }
-
-/* RÃ©servation d'espace pour Ã©viter chevauchement News vs ProgressBar */
+/* Réservation d'espace pour éviter chevauchement News vs ProgressBar */
 :root {
-  --news-width: 360px; /* largeur cible panneau News desktop */
-  --news-gap: 18px; /* marge droite du panneau */
+  --news-width: 360px;
+  --news-gap: 18px;
 }
-
+/* Réduction de la taille des éléments sur petits écrans */
 @media (max-width: 1200px) {
   :root {
     --news-width: 340px;
@@ -213,8 +193,7 @@ html {
     --news-gap: 12px;
   }
 }
-
-/* En dessous de 720px, les News passent plein centre â†’ on libÃ¨re la largeur */
+/* En dessous de 720px, les News passent plein centre, on libère la largeur */
 @media (max-width: 720px) {
   :root {
     --news-width: 0px;
