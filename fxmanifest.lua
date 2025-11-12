@@ -7,7 +7,7 @@ game 'gta5'                    -- Cible le jeu Grand Theft Auto V
 
 author 'NRW'                   -- Auteur ou organisation responsable du projet
 description 'Écran de chargement React / Vite optimisé' -- Brève description du module
-version '2.0.0'                -- Version actuelle du projet
+version '4.0.0'                -- Version actuelle du projet
 
 -- Spécifie la page HTML utilisée comme écran de chargement
 loadscreen 'ui/dist/index.html'
