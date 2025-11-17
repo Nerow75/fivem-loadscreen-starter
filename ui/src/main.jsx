@@ -3,7 +3,8 @@
 // Importation des modules
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
+// import App from "./App.jsx"; // Remplacer par App.jsx pour le thème normal
+import App from "./App.christmas.jsx"; // Remplacer par App.christmas.jsx pour le thème Noël
 import "./index.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 

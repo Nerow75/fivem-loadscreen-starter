@@ -3,7 +3,7 @@
 // Utilise un style “glassmorphism” et gère l’ouverture sécurisée des liens externes.
 
 import PropTypes from "prop-types";
-import { THEME, LINKS } from "../../config";
+import { THEME, LINKS } from "../../config/config";
 
 // Fonction d’ouverture sécurisée d’un lien externe
 // - Utilise invokeNative dans un environnement NUI (FiveM)

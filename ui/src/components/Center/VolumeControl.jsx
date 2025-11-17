@@ -4,7 +4,7 @@
 
 import { useEffect, useId, useMemo } from "react";
 import PropTypes from "prop-types";
-import { THEME } from "../../config";
+import { THEME } from "../../config/config";
 
 // Génération des styles CSS dynamiques en fonction de la couleur principale du thème.
 const styles = (primary) => `

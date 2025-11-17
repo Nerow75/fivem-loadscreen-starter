@@ -3,7 +3,7 @@
 // Présente un effet “verre liquide” (glassmorphism) et limite l’affichage aux trois dernières actualités.
 
 import PropTypes from "prop-types";
-import { THEME } from "../../config";
+import { THEME } from "../../config/config";
 
 // Style de base pour le panneau (effet verre liquide)
 const liquidGlass = {

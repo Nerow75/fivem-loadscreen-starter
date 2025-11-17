@@ -3,7 +3,7 @@
 // Intègre un effet lumineux animé et un texte d’état associé.
 
 import PropTypes from "prop-types";
-import { THEME as RAW } from "../../config";
+import { THEME as RAW } from "../../config/config";
 
 // Définition du thème visuel (couleurs principales et secondaires)
 const THEME = {

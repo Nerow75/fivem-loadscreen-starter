@@ -3,7 +3,7 @@
 // Présente un style “glassmorphism” et un effet d’animation liquide décoratif.
 
 import PropTypes from "prop-types";
-import { THEME } from "../../config";
+import { THEME } from "../../config/config";
 
 // Style visuel principal avec effet verre et ombres internes
 const liquidGlassStyle = {

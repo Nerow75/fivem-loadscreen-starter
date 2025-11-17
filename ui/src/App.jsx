@@ -32,20 +32,20 @@ import { ProgressBar } from "./components/Footer/ProgressBar";
 import { Version } from "./components/Footer/Version";
 
 // Importation de la configuration globale
-import { VIDEOS, MUSIC, TOP_PHRASES, NEWS, SERVER } from "./config";
+import { VIDEOS, MUSIC, TOP_PHRASES, NEWS, SERVER } from "./config/config.js";
 
 // Préparation des listes de vidéos et musiques avec vérification de type
 const videos = Array.isArray(VIDEOS?.list) ? VIDEOS.list : [];
 const playlist = Array.isArray(MUSIC?.list) ? MUSIC.list : [];
 
 export default function App() {
-  const [maxPlayers] = useState(128); // Nombre maximal de joueurs affiché
+  const [maxPlayers] = useState(128);
 
   // Initialisation des hooks custom
-  const { progress, loadingText, playerCount } = useNUIMessages(); // Gestion des messages et progression du chargement
-  const { currentTime, currentDate } = useClock(); // Gestion de l'horloge temps réel
-  const { canvasRef: particlesCanvasRef } = useParticles(); // Initialisation du canvas des particules
-  const { canvasRef: trailCanvasRef } = useMouseTrail(); // Initialisation du canvas pour la traînée de souris
+  const { progress, loadingText, playerCount } = useNUIMessages();
+  const { currentTime, currentDate } = useClock();
+  const { canvasRef: particlesCanvasRef } = useParticles();
+  const { canvasRef: trailCanvasRef } = useMouseTrail();
 
   // Gestion du lecteur audio via hook dédié
   const {
@@ -60,7 +60,7 @@ export default function App() {
     currentTrack,
   } = useAudioPlayer(playlist);
 
-  // Configuration des contrôles clavier (navigation musicale et volume)
+  // Configuration des contrôles clavier
   useKeyboardControls({
     onPrevious: previousTrack,
     onNext: nextTrack,
@@ -68,7 +68,7 @@ export default function App() {
     onVolumeDown: () => setVolume(Math.max(0, volume - 5)),
   });
 
-  // Accessibilité : focus automatique sur la zone de contenu lors de l'utilisation du lien d'évitement
+  // Accessibilité
   useEffect(() => {
     const hash = window.location.hash;
     if (hash === "#contenu") {
@@ -88,12 +88,12 @@ export default function App() {
       }}
     >
       {/* Arrière-plan multimédia */}
-      <VideoBackground sources={videos} />
+      <VideoBackground sources={videos} zIndex={1} />
       <Overlay zIndex={2} />
       <MouseTrail canvasRef={trailCanvasRef} zIndex={3} />
       <Particles canvasRef={particlesCanvasRef} zIndex={4} opacity={1} />
 
-      {/* Lien d’évitement pour la navigation clavier */}
+      {/* Lien d'évitement pour la navigation clavier */}
       <a
         href="#contenu"
         className="skip-link"
@@ -128,7 +128,7 @@ export default function App() {
           animation: "nrFadeIn 600ms ease both",
         }}
       >
-        {/* En-tête : affichage de l'heure, du nombre de joueurs et des liens sociaux */}
+        {/* En-tête */}
         <header
           role="banner"
           aria-label="Informations serveur et navigation"
@@ -144,7 +144,7 @@ export default function App() {
           <SocialLinks />
         </header>
 
-        {/* Section principale : logo, lecteur musical, contrôle du volume */}
+        {/* Section principale */}
         <main
           id="contenu"
           tabIndex={-1}
@@ -185,7 +185,7 @@ export default function App() {
           </div>
         </main>
 
-        {/* Section d'actualités et informations complémentaires */}
+        {/* Section actualités */}
         <section
           aria-label="Actualités"
           style={{ width: "min(1100px, 100%)", margin: "0 auto" }}
@@ -193,7 +193,7 @@ export default function App() {
           <NewsPanel news={NEWS} />
         </section>
 
-        {/* Pied de page : progression du chargement et version du serveur */}
+        {/* Pied de page */}
         <footer
           role="contentinfo"
           aria-label="Progression du chargement et version"
@@ -203,7 +203,7 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Élément audio invisible contrôlé par les hooks */}
+      {/* Élément audio */}
       <audio ref={audioRef} onEnded={handleEnded} aria-hidden="true" />
     </div>
   );

@@ -3,7 +3,7 @@
 // Gère la lecture, la pause et la navigation entre les pistes avec une présentation claire et responsive.
 
 import PropTypes from "prop-types";
-import { THEME } from "../../config";
+import { THEME } from "../../config/config";
 
 // Style de base des boutons (verre translucide, effet lumineux et réactivité au survol)
 const baseBtn = {
