@@ -1,41 +1,27 @@
-<!-- index.html -->
-<!-- Fichier principal du projet : point d'entrée de l'application React pour le chargement FiveM -->
-
 <!DOCTYPE html>
 <html lang="fr">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Métadonnées SEO et accessibilité -->
-  <meta name="description" content="Écran de chargement interactif pour serveur FiveM Sun Andreas" />
-  <meta name="theme-color" content="#22A7E8" />
-
-  <!-- Titre affiché dans l’onglet du navigateur -->
-  <title>Chargement</title>
-
-  <!-- Icône de l’application (favicon) -->
-  <link rel="icon" type="image/png" href="logo.png" />
-
-  <!-- Règle d’accessibilité : réduction des animations pour utilisateurs sensibles -->
-  <style>
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 1ms !important;
-        transition-duration: 1ms !important;
-        animation-iteration-count: 1 !important;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Starter de loading screen configurable pour serveur FiveM"
+    />
+    <meta name="theme-color" content="#22A7E8" />
+    <title>FiveM Loadscreen Starter</title>
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <style>
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 1ms !important;
+          transition-duration: 1ms !important;
+          animation-iteration-count: 1 !important;
+        }
       }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- Élément racine pour le montage React -->
-  <div id="root" role="application" aria-label="Écran de chargement du serveur"></div>
-
-  <!-- Script d’initialisation de l’application -->
-  <script type="module" src="/src/main.jsx"></script>
-</body>
-
+    </style>
+  </head>
+  <body>
+    <div id="root" role="application" aria-label="Ecran de chargement du serveur"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

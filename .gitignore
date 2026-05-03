@@ -1,45 +1,36 @@
 # .gitignore
-# Fichier de configuration Git pour exclure les fichiers temporaires, de configuration locale et de build.
+# Exclut les dependances, builds et fichiers locaux du depot.
 
-# Ignorer les dépendances installées via npm ou yarn
 node_modules/
-
-# Ignorer les fichiers de build générés
 dist/
 build/
 out/
 
-# Ignorer les fichiers de cache et temporaires
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.npm-cache/
 .cache/
 .temp/
 
-# Ignorer les fichiers d’environnement contenant des variables sensibles
 .env
 .env.local
 .env.*.local
 
-# Ignorer les fichiers système courants
 .DS_Store
 Thumbs.db
 
-# Ignorer les fichiers générés par les éditeurs
 .idea/
 .vscode/
 *.swp
 
-# Ignorer les rapports et fichiers de couverture de tests
 coverage/
 *.lcov
 
-# Ignorer les artefacts de verrouillage de dépendances facultatifs
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Ignorer les fichiers générés automatiquement par les outils de bundling ou compilation
 *.map

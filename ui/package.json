@@ -1,8 +1,8 @@
 {
-  "name": "loadscreen-fivem",
-  "version": "4.0.0",
+  "name": "fivem-loadscreen-starter",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Écran de chargement React optimisé pour FiveM",
+  "description": "Starter de loading screen configurable pour FiveM",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -13,9 +13,10 @@
     "fivem",
     "loadscreen",
     "react",
-    "nui"
+    "nui",
+    "template"
   ],
-  "author": "NRW",
+  "author": "Template Maintainer",
   "license": "MIT",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",

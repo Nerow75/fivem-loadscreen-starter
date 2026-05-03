@@ -37,6 +37,7 @@ import { VIDEOS, MUSIC, TOP_PHRASES, NEWS, SERVER } from "./config/config.js";
 // Préparation des listes de vidéos et musiques avec vérification de type
 const videos = Array.isArray(VIDEOS?.list) ? VIDEOS.list : [];
 const playlist = Array.isArray(MUSIC?.list) ? MUSIC.list : [];
+const hasPlaylist = playlist.length > 0;
 
 export default function App() {
   const [maxPlayers] = useState(128);
@@ -66,6 +67,7 @@ export default function App() {
     onNext: nextTrack,
     onVolumeUp: () => setVolume(Math.min(100, volume + 5)),
     onVolumeDown: () => setVolume(Math.max(0, volume - 5)),
+    enabled: hasPlaylist,
   });
 
   // Accessibilité
@@ -174,14 +176,18 @@ export default function App() {
             }}
           >
             <Logo progress={progress} />
-            <MusicPlayer
-              isPlaying={isPlaying}
-              onTogglePlay={togglePlay}
-              onPrevious={previousTrack}
-              onNext={nextTrack}
-              currentTrack={currentTrack}
-            />
-            <VolumeControl volume={volume} onVolumeChange={setVolume} />
+            {hasPlaylist ? (
+              <>
+                <MusicPlayer
+                  isPlaying={isPlaying}
+                  onTogglePlay={togglePlay}
+                  onPrevious={previousTrack}
+                  onNext={nextTrack}
+                  currentTrack={currentTrack}
+                />
+                <VolumeControl volume={volume} onVolumeChange={setVolume} />
+              </>
+            ) : null}
           </div>
         </main>
 
@@ -204,7 +210,9 @@ export default function App() {
       </div>
 
       {/* Élément audio */}
-      <audio ref={audioRef} onEnded={handleEnded} aria-hidden="true" />
+      {hasPlaylist ? (
+        <audio ref={audioRef} onEnded={handleEnded} aria-hidden="true" />
+      ) : null}
     </div>
   );
 }
