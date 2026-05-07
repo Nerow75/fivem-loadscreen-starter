@@ -2,7 +2,7 @@
 // Composant d'affichage du logo principal de l'application ou du serveur.
 
 import PropTypes from "prop-types";
-import logoUrl from "../../assets/logo.svg";
+import logoUrl from "../../assets/logo-dev.png";
 
 export const Logo = ({ width = "clamp(240px, 55vw, 360px)" }) => {
   return (

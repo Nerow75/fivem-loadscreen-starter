@@ -13,7 +13,7 @@ loadscreen_manual_shutdown 'yes'
 
 files {
     'ui/dist/index.html',
-    'ui/dist/logo.svg',
+    'ui/dist/logo-dev.png',
     'ui/dist/assets/**',
     'ui/dist/media/**',
     'ui/dist/webfonts/**'
